@@ -9,11 +9,13 @@ import { createPropositionEngine, type ProposeStylesInput } from './adapters/pro
 import type { AppConfig } from './config.js';
 import { registerBoardRoute } from './routes/board.js';
 import { registerDiscoverRoute } from './routes/discover.js';
+import { registerExportRoute } from './routes/export.js';
 import { registerHealthRoute } from './routes/health.js';
 import { registerImageRoute } from './routes/image.js';
 import { registerImagesSearchRoute } from './routes/images-search.js';
 import { registerProposeRoute } from './routes/propose.js';
 import { registerSynthesizeRoute, type SynthesizeFn } from './routes/synthesize.js';
+import { createExporter, type Exporter } from './services/export-bundle.js';
 import { fetchImage, type FetchedImage } from './services/image-fetch.js';
 import { createImageSource, type ImageSourceProvider } from './services/image-source.js';
 import { createSessionStore, type SessionStore } from './services/store.js';
@@ -30,6 +32,7 @@ export type ServerDeps = {
   fetchImage: (url: string) => Promise<FetchedImage>;
   imageSource: ImageSourceProvider | null;
   synthesize: SynthesizeFn | null;
+  exporter: Exporter;
 };
 
 export type BuildServerOptions = {
@@ -52,6 +55,7 @@ export function buildServer({ config, deps }: BuildServerOptions): FastifyInstan
     (analyzer !== null
       ? createSynthesizer({ store, fetchImage: fetchImageImpl, analyzer }).synthesize
       : null);
+  const exporter = deps?.exporter ?? createExporter({ store, fetchImage: fetchImageImpl });
 
   app.setNotFoundHandler((request, reply) => {
     void reply.code(404).send({
@@ -76,6 +80,7 @@ export function buildServer({ config, deps }: BuildServerOptions): FastifyInstan
   registerImageRoute(app, { store, thumbnails, fetchImage: fetchImageImpl });
   registerImagesSearchRoute(app, { imageSource, store });
   registerSynthesizeRoute(app, { synthesize });
+  registerExportRoute(app, { exporter });
   registerBoardRoute(app, { store });
 
   return app;
