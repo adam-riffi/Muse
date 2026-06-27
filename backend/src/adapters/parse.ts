@@ -48,3 +48,44 @@ export function extractFirstJsonArray(input: string): string | null {
 
   return null;
 }
+
+// Extract the first balanced top-level JSON object via a bracket scan (not a regex) that respects
+// string literals and escapes. Returns the object substring (including outer braces), or null.
+export function extractFirstJsonObject(input: string): string | null {
+  const start = input.indexOf('{');
+  if (start === -1) {
+    return null;
+  }
+
+  let depth = 0;
+  let inString = false;
+  let escaped = false;
+
+  for (let i = start; i < input.length; i += 1) {
+    const ch = input[i];
+
+    if (inString) {
+      if (escaped) {
+        escaped = false;
+      } else if (ch === '\\') {
+        escaped = true;
+      } else if (ch === '"') {
+        inString = false;
+      }
+      continue;
+    }
+
+    if (ch === '"') {
+      inString = true;
+    } else if (ch === '{') {
+      depth += 1;
+    } else if (ch === '}') {
+      depth -= 1;
+      if (depth === 0) {
+        return input.slice(start, i + 1);
+      }
+    }
+  }
+
+  return null;
+}
