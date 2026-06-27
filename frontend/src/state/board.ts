@@ -5,7 +5,7 @@ import {
   type ImageCandidate,
   keptCandidateIds,
 } from '@muse/shared';
-import { thumbnailUrl } from '../api/client';
+import { thumbnailUrl, saveBoard } from '../api/client';
 import {
   cameraToViewport,
   mapTldrawShape,
@@ -30,6 +30,7 @@ export type BoardStore = {
   getKeptCandidateIds: () => string[];
   addCandidate: (candidate: ImageCandidate) => void;
   removeCandidate: (candidateId: string) => void;
+  save: () => Promise<void>;
 };
 
 const EMPTY_BOARD: BoardState = { elements: [], viewport: { x: 0, y: 0, zoom: 1 } };
@@ -71,5 +72,8 @@ export const useBoardStore = create<BoardStore>((set, get) => ({
     if (ids.length > 0) {
       editor.deleteShapes(ids);
     }
+  },
+  save: async () => {
+    await saveBoard(get().getBoardState());
   },
 }));

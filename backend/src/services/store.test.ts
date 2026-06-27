@@ -42,4 +42,13 @@ describe('createSessionStore', () => {
     store.clear();
     expect(store.size()).toBe(0);
   });
+
+  it('stores and clears the board', () => {
+    const store = createSessionStore();
+    expect(store.getBoard()).toBeNull();
+    store.setBoard({ elements: [], viewport: { x: 0, y: 0, zoom: 1 } });
+    expect(store.getBoard()).not.toBeNull();
+    store.clear();
+    expect(store.getBoard()).toBeNull();
+  });
 });

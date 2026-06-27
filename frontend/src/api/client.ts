@@ -1,4 +1,4 @@
-import type { ImageCandidate, PropositionRound } from '@muse/shared';
+import type { BoardState, ImageCandidate, PropositionRound } from '@muse/shared';
 
 const API_BASE = import.meta.env.VITE_API_BASE ?? '/api';
 
@@ -48,6 +48,25 @@ export async function propose(
 
 export function thumbnailUrl(id: string): string {
   return `${API_BASE}/image/${id}/thumbnail`;
+}
+
+export async function loadBoard(): Promise<BoardState> {
+  const response = await fetch(`${API_BASE}/board`);
+  if (!response.ok) {
+    throw new Error(`Load board failed with status ${response.status}`);
+  }
+  return (await response.json()) as BoardState;
+}
+
+export async function saveBoard(board: BoardState): Promise<void> {
+  const response = await fetch(`${API_BASE}/board`, {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify(board),
+  });
+  if (!response.ok) {
+    throw new Error(`Save board failed with status ${response.status}`);
+  }
 }
 
 export async function health(): Promise<{ status: string }> {

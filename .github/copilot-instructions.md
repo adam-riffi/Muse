@@ -105,14 +105,21 @@ Milestones: `v0.1.0` seam · `v0.2.0` refine→discover→curate · `v0.3.0` syn
   `BoardState`, `keptCandidateIds(board)` (curation gate).
 - **PR #14 `feat/canvas-integration`** — DONE, merged (+ `fix/tldraw-dependency` PR #22). tldraw
   Whiteboard mounted (board adapter + store, grid, persistence). tldraw mocked in tests.
-- **PR #15 `feat/candidate-tray-dragdrop`** — DONE (on branch, CI/merge pending). `board/place.ts`
-  (pure asset/shape builders), board store `addCandidate`/`removeCandidate`, `CandidateTray` beside
-  the canvas (Add to board → kept tldraw image shape with `meta.candidateId`). 151 tests.
-- **PR #16 `feat/annotations-shapes`** — DONE (on branch, CI/merge pending). tldraw's toolbar already
-  provides shape/arrow/draw/text tools; extended `mapTldrawShape` to capture text/arrow/freedraw into
-  `BoardState` (board.json fidelity; board PNG is the visual source of truth). 154 tests.
-- **Next:** **PR #17 `feat/board-persistence`** — `POST /board` (save `BoardState`) + `GET /board`
-  (load) via session store; client autosave (debounced) + restore. Completes Epic 4 → **v0.2.0**.
+- **PR #15 `feat/candidate-tray-dragdrop`** — DONE, merged. `board/place.ts` (pure asset/shape
+  builders), board store `addCandidate`/`removeCandidate`, `CandidateTray` beside the canvas
+  (Add to board → kept tldraw image shape with `meta.candidateId`).
+- **PR #16 `feat/annotations-shapes`** — DONE, merged. tldraw's toolbar already provides
+  shape/arrow/draw/text tools; extended `mapTldrawShape` to capture text/arrow/freedraw into
+  `BoardState` (board.json fidelity; board PNG is the visual source of truth).
+- **PR #17 `feat/board-persistence`** — DONE (on branch, CI/merge pending). Session store
+  `getBoard`/`setBoard` (+`clear` nulls it); `GET /board` (stored or empty) + `POST /board`
+  (zod-validated → 204 / 400); client `loadBoard`/`saveBoard`; board store `save()`; debounced
+  autosave wired into the Whiteboard `onMount` (server save complements tldraw's local IndexedDB
+  restore via `persistenceKey`). 159 tests. **Completes Epic 4 → milestone `v0.2.0`.**
+- **Next:** **Epic 5/6 — PR #18 `feat/image-api-source`** (optional Openverse/Unsplash provider) then
+  Epic 6 synthesis: `feat/palette-extraction` (node-vibrant, deterministic), `feat/vlm-analysis`
+  (provider abstraction, single multi-image call → `MoodboardAnalysis`, mocked in CI),
+  `feat/synthesize-endpoint`, `feat/export-renderers` → **`v0.3.0`**.
 - **`dev` integration:** `dev` has Epics 0–3 + Epic 4 canvas contracts (PRs #18, #20 merged).
   Whiteboard chunk (PR #14+) on `dev-copilot` awaits the next `dev` PR. (Per user: one big `dev` PR
   at the end of the run.)

@@ -7,6 +7,7 @@ import type { ImageCandidate, PropositionRound } from '@muse/shared';
 import { discoverImages, type DiscoverImagesInput } from './adapters/codex.js';
 import { createPropositionEngine, type ProposeStylesInput } from './adapters/proposition.js';
 import type { AppConfig } from './config.js';
+import { registerBoardRoute } from './routes/board.js';
 import { registerDiscoverRoute } from './routes/discover.js';
 import { registerHealthRoute } from './routes/health.js';
 import { registerImageRoute } from './routes/image.js';
@@ -57,6 +58,7 @@ export function buildServer({ config, deps }: BuildServerOptions): FastifyInstan
   registerDiscoverRoute(app, { discover, store });
   registerProposeRoute(app, { propose, store });
   registerImageRoute(app, { store, thumbnails, fetchImage: fetchImageImpl });
+  registerBoardRoute(app, { store });
 
   return app;
 }

@@ -35,4 +35,8 @@ export const handlers = [
   http.post('/api/discover', () => HttpResponse.json(sampleCandidates)),
   http.post('/api/propose', () => HttpResponse.json(sampleRound)),
   http.get('/api/health', () => HttpResponse.json({ status: 'ok' })),
+  http.get('/api/board', () =>
+    HttpResponse.json({ elements: [], viewport: { x: 0, y: 0, zoom: 1 } }),
+  ),
+  http.post('/api/board', () => new HttpResponse(null, { status: 204 })),
 ];
