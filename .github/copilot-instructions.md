@@ -130,14 +130,18 @@ Milestones: `v0.1.0` seam · `v0.2.0` refine→discover→curate · `v0.3.0` syn
 - **PR #21 `feat/synthesize-endpoint`** — DONE, merged. `services/synthesize.ts` joins the two
   halves: resolve kept ids → fetch bytes → `extractPalette` + VLM analyze → merged
   `MoodboardAnalysis`. `POST /synthesize {imageIds}`; 400 / 501 / 502; synthesizer injectable.
-- **PR #22 `feat/export-renderers`** — DONE (on branch, CI/merge pending). `backend/src/render/`:
-  pure deterministic renderers — `renderDesignTokens` → `design-tokens.json`, `renderManifest` →
-  `manifest.json`, `renderDesignBrief` → `design-brief.md`, `renderPrompt` → agent-ready `prompt.md`.
-  No IO, no model calls. 202 tests. **Milestone `v0.3.0`** (synthesis produces all bundle artifacts).
-- **Next:** **PR #23 `feat/export-bundle`** — `archiver` zip: `images/` + `manifest.json` +
-  `design-tokens.json` + `design-brief.md` + `prompt.md` + `board.json` + rasterized `board.png`;
-  `GET /export` streams the zip. Then `feat/export-panel-ui` (download + a11y) and
-  `chore/e2e-and-release` (Playwright happy path + `release.yml` + `codex-contract.yml`) → **`v1.0.0`**.
+- **PR #22 `feat/export-renderers`** — DONE, merged. `backend/src/render/`: pure renderers —
+  `renderDesignTokens`/`renderManifest`/`renderDesignBrief`/`renderPrompt`. No IO/model calls.
+  **Milestone `v0.3.0`**.
+- **PR #23 `feat/export-bundle`** — DONE (on branch, CI/merge pending). `services/export-bundle.ts`:
+  `createExporter` zips (deterministic, in-memory via **fflate**) the kept images + `manifest.json` +
+  `design-tokens.json` + `design-brief.md` + `prompt.md` + `board.json` + optional client-supplied
+  `board.png`. `POST /export {imageIds, analysis, boardPng?}` streams `application/zip`; 400 on bad
+  body/unknown ids. Tests unzip and assert structure. 208 tests.
+- **Next:** **PR #24 `feat/export-panel-ui`** — frontend export panel: call `/synthesize`, rasterize
+  the tldraw board (`editor.toImage` → PNG base64), POST `/export`, download the zip; empty/error
+  states + a11y. Then **PR #25 `chore/e2e-and-release`** (Playwright happy path, `release.yml`,
+  `codex-contract.yml`, docs) → **`v1.0.0`**. Finally: ONE big PR `dev-copilot → dev`.
 - **`dev` integration:** `dev` has Epics 0–3 + Epic 4 canvas contracts (PRs #18, #20 merged).
   Whiteboard chunk (PR #14+) on `dev-copilot` awaits the next `dev` PR. (Per user: one big `dev` PR
   at the end of the run.)
