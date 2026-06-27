@@ -99,15 +99,16 @@ Milestones: `v0.1.0` seam · `v0.2.0` refine→discover→curate · `v0.3.0` syn
   runner + parse, preview candidates from `previewUrl`, retry-once, cache by brief+refinements).
 - **PR #11 `feat/propose-endpoint`** — DONE, merged. `POST /propose` → `PropositionRound`; registers
   preview candidates so `/image/:id/thumbnail` serves them; injectable engine in `buildServer`.
-- **PR #12 `feat/proposition-ui`** — DONE (on branch, CI/merge pending). Frontend: `propose()` +
-  `thumbnailUrl()` client, `usePropositionStore` (zustand: rounds + accumulated refinements),
-  `PropositionGrid` + `RefinementBreadcrumb`, presentational `BriefForm`. App orchestrates
-  brief → propose → pick (refine) → Search now → discover. msw multi-round flow test. **Epic 3 done.**
-- **Next:** **PR #13 `feat/canvas-contracts`** (Epic 4) — `@muse/shared`: `CanvasElement` union
-  (image|rect|ellipse|arrow|freedraw|text) + `BoardState {elements[], viewport}`; derive kept-set =
-  image elements on board; schema + derivation tests. Then PR #14 tldraw integration.
-- **`dev` integration:** `dev` has v0.1.0 + frontend skeleton. **GitHub PR #13 OPEN** (`dev ←
-  release/epic2-rest`: chat UI + image pipeline) — merge to complete Epic 2 in `dev`.
+- **PR #12 `feat/proposition-ui`** — DONE, merged. Proposition store + grid + breadcrumb; App
+  orchestrates brief → propose → pick (refine) → Search now → discover. **Epic 3 done.**
+- **PR #13 `feat/canvas-contracts`** — DONE (on branch, CI/merge pending). `@muse/shared`:
+  `CanvasElementSchema` (discriminated union image|rect|ellipse|arrow|freedraw|text), `BoardState`,
+  `keptCandidateIds(board)` (curation gate = image-element candidate ids). 137 tests.
+- **Next:** **PR #14 `feat/canvas-integration`** (frontend) — mount **tldraw** (decided engine) with
+  grid background + pan/zoom; `BoardState ↔ tldraw` adapter (serialize/deserialize, engine isolated);
+  toolbar shell. Then #15 candidate tray drag/drop, #16 annotations, #17 board persistence.
+- **`dev` integration:** `dev` has full Epic 2 (PR #13 merged). **GitHub PR #18 OPEN** (`dev ←
+  release/epic3-propositions`, Epic 3, CI green) — for Adam to merge. Next: Epic 4 `release` PR.
 
 ## Environment (verified)
 
