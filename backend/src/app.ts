@@ -11,8 +11,10 @@ import { registerBoardRoute } from './routes/board.js';
 import { registerDiscoverRoute } from './routes/discover.js';
 import { registerHealthRoute } from './routes/health.js';
 import { registerImageRoute } from './routes/image.js';
+import { registerImagesSearchRoute } from './routes/images-search.js';
 import { registerProposeRoute } from './routes/propose.js';
 import { fetchImage, type FetchedImage } from './services/image-fetch.js';
+import { createImageSource, type ImageSourceProvider } from './services/image-source.js';
 import { createSessionStore, type SessionStore } from './services/store.js';
 import { createThumbnailStore, type ThumbnailStore } from './services/thumbnails.js';
 
@@ -22,6 +24,7 @@ export type ServerDeps = {
   store: SessionStore;
   thumbnails: ThumbnailStore;
   fetchImage: (url: string) => Promise<FetchedImage>;
+  imageSource: ImageSourceProvider | null;
 };
 
 export type BuildServerOptions = {
@@ -36,6 +39,7 @@ export function buildServer({ config, deps }: BuildServerOptions): FastifyInstan
   const propose = deps?.propose ?? createPropositionEngine().propose;
   const thumbnails = deps?.thumbnails ?? createThumbnailStore();
   const fetchImageImpl = deps?.fetchImage ?? ((url: string) => fetchImage(url));
+  const imageSource = deps?.imageSource ?? createImageSource(config);
 
   app.setNotFoundHandler((request, reply) => {
     void reply.code(404).send({
@@ -58,6 +62,7 @@ export function buildServer({ config, deps }: BuildServerOptions): FastifyInstan
   registerDiscoverRoute(app, { discover, store });
   registerProposeRoute(app, { propose, store });
   registerImageRoute(app, { store, thumbnails, fetchImage: fetchImageImpl });
+  registerImagesSearchRoute(app, { imageSource, store });
   registerBoardRoute(app, { store });
 
   return app;
