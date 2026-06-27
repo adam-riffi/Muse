@@ -9,6 +9,7 @@ describe('loadConfig', () => {
       host: '127.0.0.1',
       logLevel: 'info',
       imageSource: 'openverse',
+      agentCli: 'codex',
       vlmProvider: 'anthropic',
     });
   });
@@ -43,5 +44,11 @@ describe('loadConfig', () => {
     const config = loadConfig({ VLM_PROVIDER: 'openai', OPENAI_API_KEY: 'k', VLM_MODEL: 'gpt-4o' });
     expect(config.openaiApiKey).toBe('k');
     expect(config.vlmModel).toBe('gpt-4o');
+  });
+
+  it('reads the agent CLI selection', () => {
+    expect(loadConfig({}).agentCli).toBe('codex');
+    expect(loadConfig({ AGENT_CLI: 'copilot' }).agentCli).toBe('copilot');
+    expect(() => loadConfig({ AGENT_CLI: 'gemini' })).toThrow();
   });
 });
