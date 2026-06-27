@@ -8,11 +8,16 @@ import { discoverImages, type DiscoverImagesInput } from './adapters/codex.js';
 import type { AppConfig } from './config.js';
 import { registerDiscoverRoute } from './routes/discover.js';
 import { registerHealthRoute } from './routes/health.js';
+import { registerImageRoute } from './routes/image.js';
+import { fetchImage, type FetchedImage } from './services/image-fetch.js';
 import { createSessionStore, type SessionStore } from './services/store.js';
+import { createThumbnailStore, type ThumbnailStore } from './services/thumbnails.js';
 
 export type ServerDeps = {
   discover: (input: DiscoverImagesInput) => Promise<ImageCandidate[]>;
   store: SessionStore;
+  thumbnails: ThumbnailStore;
+  fetchImage: (url: string) => Promise<FetchedImage>;
 };
 
 export type BuildServerOptions = {
@@ -24,6 +29,8 @@ export function buildServer({ config, deps }: BuildServerOptions): FastifyInstan
   const app = Fastify({ logger: resolveLogger(config) });
   const store = deps?.store ?? createSessionStore();
   const discover = deps?.discover ?? ((input: DiscoverImagesInput) => discoverImages(input));
+  const thumbnails = deps?.thumbnails ?? createThumbnailStore();
+  const fetchImageImpl = deps?.fetchImage ?? ((url: string) => fetchImage(url));
 
   app.setNotFoundHandler((request, reply) => {
     void reply.code(404).send({
@@ -44,6 +51,7 @@ export function buildServer({ config, deps }: BuildServerOptions): FastifyInstan
 
   registerHealthRoute(app);
   registerDiscoverRoute(app, { discover, store });
+  registerImageRoute(app, { store, thumbnails, fetchImage: fetchImageImpl });
 
   return app;
 }
