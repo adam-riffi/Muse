@@ -3,15 +3,27 @@ import Fastify, {
   type FastifyInstance,
   type FastifyServerOptions,
 } from 'fastify';
+import type { ImageCandidate } from '@muse/shared';
+import { discoverImages, type DiscoverImagesInput } from './adapters/codex.js';
 import type { AppConfig } from './config.js';
+import { registerDiscoverRoute } from './routes/discover.js';
 import { registerHealthRoute } from './routes/health.js';
+import { createSessionStore, type SessionStore } from './services/store.js';
+
+export type ServerDeps = {
+  discover: (input: DiscoverImagesInput) => Promise<ImageCandidate[]>;
+  store: SessionStore;
+};
 
 export type BuildServerOptions = {
   config: AppConfig;
+  deps?: Partial<ServerDeps>;
 };
 
-export function buildServer({ config }: BuildServerOptions): FastifyInstance {
+export function buildServer({ config, deps }: BuildServerOptions): FastifyInstance {
   const app = Fastify({ logger: resolveLogger(config) });
+  const store = deps?.store ?? createSessionStore();
+  const discover = deps?.discover ?? ((input: DiscoverImagesInput) => discoverImages(input));
 
   app.setNotFoundHandler((request, reply) => {
     void reply.code(404).send({
@@ -31,6 +43,7 @@ export function buildServer({ config }: BuildServerOptions): FastifyInstance {
   });
 
   registerHealthRoute(app);
+  registerDiscoverRoute(app, { discover, store });
 
   return app;
 }
