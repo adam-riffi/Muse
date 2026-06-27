@@ -79,15 +79,17 @@ Milestones: `v0.1.0` seam · `v0.2.0` refine→discover→curate · `v0.3.0` syn
 - **PR #3 `feat/backend-skeleton`** — DONE, merged (`05327ed`). `@muse/backend` (Fastify 5, tsx):
   `loadConfig`, `buildServer(config)` (logger + JSON 404 + typed error handler), `GET /health`,
   entrypoint with graceful shutdown.
-- **PR #4 `feat/codex-adapter`** — DONE (on branch, CI/merge pending). THE seam, isolated in
-  `backend/src/adapters/`: `parse.ts` (stripAnsi + balanced-bracket array scan), `codex-prompt.ts`
-  (JSON-only discovery prompt + strict retry reminder), `normalize.ts` (RawDiscoveryItem → validated
-  `ImageCandidate[]`, drop-invalid + de-dup), `codex-runner.ts` (verified `codex exec` invocation +
-  JSONL fallback + spawn glue), `codex.ts` (`discoverImages`: retry-once → `CodexDiscoveryError` with
-  raw output). 65 tests, hermetic via injected runner. CLI surface pinned in `docs/CODEX.md`.
-- **Next:** **PR #5 `feat/discover-endpoint`** — in-memory session store, `POST /discover` (zod body)
-  → `ImageCandidate[]`, `scripts/test-discover.ts` (live seam check), integration test (mocked
-  adapter). **Milestone `v0.1.0`.**
+- **PR #4 `feat/codex-adapter`** — DONE, merged (`64374e3`). THE seam, isolated in
+  `backend/src/adapters/`: `parse.ts`, `codex-prompt.ts`, `normalize.ts`, `codex-runner.ts`,
+  `codex.ts` (`discoverImages`: retry-once → `CodexDiscoveryError`). Pinned in `docs/CODEX.md`.
+- **PR #5 `feat/discover-endpoint`** — DONE (on branch, CI/merge pending). In-memory `SessionStore`,
+  `POST /discover` (zod body → `ImageCandidate[]`, 400/502 handling, injectable adapter + store),
+  `scripts/test-discover.ts`. **Validated live: a brief returned 12 real candidates via Codex web
+  search.** 73 tests. **Milestone `v0.1.0`** (changeset added).
+- **Next:** **PR #6 `feat/frontend-skeleton`** — Vite + React + TS app shell, typed API client over
+  `@muse/shared`, Tailwind, testing-library + msw. (Starts Epic 2; adds the `frontend` workspace.)
+- **Integration to `dev`:** GitHub PR #5 (`dev-copilot → dev`) is open for Adam to review/merge
+  (note: GitHub PR numbers now differ from roadmap PR numbers).
 
 ## Environment (verified)
 
