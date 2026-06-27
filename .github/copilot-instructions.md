@@ -133,15 +133,17 @@ Milestones: `v0.1.0` seam · `v0.2.0` refine→discover→curate · `v0.3.0` syn
 - **PR #22 `feat/export-renderers`** — DONE, merged. `backend/src/render/`: pure renderers —
   `renderDesignTokens`/`renderManifest`/`renderDesignBrief`/`renderPrompt`. No IO/model calls.
   **Milestone `v0.3.0`**.
-- **PR #23 `feat/export-bundle`** — DONE (on branch, CI/merge pending). `services/export-bundle.ts`:
-  `createExporter` zips (deterministic, in-memory via **fflate**) the kept images + `manifest.json` +
-  `design-tokens.json` + `design-brief.md` + `prompt.md` + `board.json` + optional client-supplied
-  `board.png`. `POST /export {imageIds, analysis, boardPng?}` streams `application/zip`; 400 on bad
-  body/unknown ids. Tests unzip and assert structure. 208 tests.
-- **Next:** **PR #24 `feat/export-panel-ui`** — frontend export panel: call `/synthesize`, rasterize
-  the tldraw board (`editor.toImage` → PNG base64), POST `/export`, download the zip; empty/error
-  states + a11y. Then **PR #25 `chore/e2e-and-release`** (Playwright happy path, `release.yml`,
-  `codex-contract.yml`, docs) → **`v1.0.0`**. Finally: ONE big PR `dev-copilot → dev`.
+- **PR #23 `feat/export-bundle`** — DONE, merged. `services/export-bundle.ts`: `createExporter` zips
+  (deterministic, in-memory via **fflate**) kept images + manifest/tokens/brief/prompt + board.json +
+  optional client `board.png`. `POST /export {imageIds, analysis, boardPng?}` streams `application/zip`.
+- **PR #24 `feat/export-panel-ui`** — DONE (on branch, CI/merge pending). Frontend: `synthesize`/
+  `exportBundle` client fns, board-store `getBoardPng()` (`editor.toImage`, best-effort), an export
+  store (idle/loading/success/error), and an accessible `ExportPanel` wired into App. One click →
+  synthesize kept set → rasterize board → POST `/export` → download zip. 215 tests.
+- **Next:** **PR #25 `chore/e2e-and-release`** — Playwright happy path (propose→discover→curate→
+  synthesize→export, Codex/VLM stubbed), `release.yml` (tag → changelog → GitHub Release tarball),
+  `codex-contract.yml` (manual self-hosted live-Codex smoke), docs finalization → **`v1.0.0`**.
+  Then the single big PR `dev-copilot → dev`.
 - **`dev` integration:** `dev` has Epics 0–3 + Epic 4 canvas contracts (PRs #18, #20 merged).
   Whiteboard chunk (PR #14+) on `dev-copilot` awaits the next `dev` PR. (Per user: one big `dev` PR
   at the end of the run.)

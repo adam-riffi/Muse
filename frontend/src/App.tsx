@@ -1,6 +1,7 @@
 import { BriefForm } from './components/BriefForm';
 import { CandidateGrid } from './components/CandidateGrid';
 import { CandidateTray } from './components/CandidateTray';
+import { ExportPanel } from './components/ExportPanel';
 import { PropositionGrid } from './components/PropositionGrid';
 import { RefinementBreadcrumb } from './components/RefinementBreadcrumb';
 import { Whiteboard } from './components/Whiteboard';
@@ -89,6 +90,8 @@ export function App() {
             </div>
           </div>
         </section>
+
+        <ExportPanel />
       </div>
     </main>
   );

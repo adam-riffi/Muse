@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { discover, propose, searchImages, thumbnailUrl } from './client';
+import { discover, exportBundle, propose, searchImages, synthesize, thumbnailUrl } from './client';
 
 describe('api client', () => {
   it('discover() returns parsed candidates from the backend', async () => {
@@ -22,5 +22,17 @@ describe('api client', () => {
     const candidates = await searchImages('anime', 5);
     expect(candidates).toHaveLength(1);
     expect(candidates[0]).toMatchObject({ url: 'https://x.com/a.jpg' });
+  });
+
+  it('synthesize() returns a MoodboardAnalysis', async () => {
+    const analysis = await synthesize(['a']);
+    expect(analysis.summary).toBe('A warm classical board.');
+    expect(analysis.palette[0]).toMatchObject({ role: 'dominant' });
+  });
+
+  it('exportBundle() returns a zip blob', async () => {
+    const analysis = await synthesize(['a']);
+    const blob = await exportBundle({ imageIds: ['a'], analysis });
+    expect(blob.type).toContain('application/zip');
   });
 });
