@@ -8,6 +8,7 @@ describe('loadConfig', () => {
       port: 3001,
       host: '127.0.0.1',
       logLevel: 'info',
+      imageSource: 'openverse',
     });
   });
 
@@ -28,5 +29,11 @@ describe('loadConfig', () => {
     expect(config.nodeEnv).toBe('production');
     expect(config.host).toBe('0.0.0.0');
     expect(config.logLevel).toBe('warn');
+  });
+
+  it('reads image source settings', () => {
+    expect(loadConfig({ IMAGE_SOURCE: 'none' }).imageSource).toBe('none');
+    const config = loadConfig({ IMAGE_SOURCE: 'unsplash', UNSPLASH_ACCESS_KEY: 'k' });
+    expect(config.unsplashAccessKey).toBe('k');
   });
 });
