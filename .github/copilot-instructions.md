@@ -136,14 +136,17 @@ Milestones: `v0.1.0` seam · `v0.2.0` refine→discover→curate · `v0.3.0` syn
 - **PR #23 `feat/export-bundle`** — DONE, merged. `services/export-bundle.ts`: `createExporter` zips
   (deterministic, in-memory via **fflate**) kept images + manifest/tokens/brief/prompt + board.json +
   optional client `board.png`. `POST /export {imageIds, analysis, boardPng?}` streams `application/zip`.
-- **PR #24 `feat/export-panel-ui`** — DONE (on branch, CI/merge pending). Frontend: `synthesize`/
-  `exportBundle` client fns, board-store `getBoardPng()` (`editor.toImage`, best-effort), an export
-  store (idle/loading/success/error), and an accessible `ExportPanel` wired into App. One click →
-  synthesize kept set → rasterize board → POST `/export` → download zip. 215 tests.
-- **Next:** **PR #25 `chore/e2e-and-release`** — Playwright happy path (propose→discover→curate→
-  synthesize→export, Codex/VLM stubbed), `release.yml` (tag → changelog → GitHub Release tarball),
-  `codex-contract.yml` (manual self-hosted live-Codex smoke), docs finalization → **`v1.0.0`**.
-  Then the single big PR `dev-copilot → dev`.
+- **PR #24 `feat/export-panel-ui`** — DONE, merged. Frontend export panel: `synthesize`/
+  `exportBundle` client, board-store `getBoardPng()`, export store, accessible `ExportPanel` in App.
+- **PR #25 `chore/e2e-and-release`** — DONE (on branch, CI/merge pending). Playwright happy-path e2e
+  (`frontend/e2e/`, `playwright.config.ts`, root `test:e2e`) against the built SPA with `/api`
+  stubbed via `page.route` — fully hermetic; new **`e2e.yml`** workflow (installs Chromium). Also
+  `release.yml` (tag → tarball + GitHub Release), `codex-contract.yml` (manual self-hosted live-Codex
+  smoke, `verify:codex`), `docs/RUNBOOK.md`, README finalization. **Milestone `v1.0.0`.**
+- **Roadmap COMPLETE (PRs #1–#25).** Next: open the single big PR `dev-copilot → dev` covering
+  everything since `dev`'s last state (whiteboard → propositions → synthesis → export).
+- **CI note:** `ci.yml` stays the hermetic gate (lint/format/typecheck/test/build). `e2e.yml` is a
+  separate Playwright job on the same triggers; both must be green before merging a feature branch.
 - **`dev` integration:** `dev` has Epics 0–3 + Epic 4 canvas contracts (PRs #18, #20 merged).
   Whiteboard chunk (PR #14+) on `dev-copilot` awaits the next `dev` PR. (Per user: one big `dev` PR
   at the end of the run.)
