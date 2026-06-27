@@ -1,29 +1,75 @@
 import { BriefForm } from './components/BriefForm';
 import { CandidateGrid } from './components/CandidateGrid';
+import { PropositionGrid } from './components/PropositionGrid';
+import { RefinementBreadcrumb } from './components/RefinementBreadcrumb';
 import { useCandidateStore } from './state/candidates';
+import { usePropositionStore } from './state/propositions';
 
 export function App() {
-  const status = useCandidateStore((state) => state.status);
-  const error = useCandidateStore((state) => state.error);
+  const propStatus = usePropositionStore((state) => state.status);
+  const propError = usePropositionStore((state) => state.error);
+  const round = usePropositionStore((state) => state.round);
+  const brief = usePropositionStore((state) => state.brief);
+  const refinements = usePropositionStore((state) => state.refinements);
+  const startPropositions = usePropositionStore((state) => state.start);
+  const resetPropositions = usePropositionStore((state) => state.reset);
+
+  const discoverStatus = useCandidateStore((state) => state.status);
+  const discoverError = useCandidateStore((state) => state.error);
+  const runDiscovery = useCandidateStore((state) => state.runDiscovery);
 
   return (
     <main className="min-h-screen bg-zinc-950 text-zinc-100">
       <div className="mx-auto max-w-5xl space-y-8 px-6 py-10">
         <header className="space-y-1">
           <h1 className="text-3xl font-semibold tracking-tight">Muse</h1>
-          <p className="text-zinc-400">Describe a project; discover visual references.</p>
+          <p className="text-zinc-400">
+            Describe a project; refine the style; discover references.
+          </p>
         </header>
 
-        <BriefForm />
+        <BriefForm
+          onSubmit={(value) => void startPropositions(value)}
+          loading={propStatus === 'loading'}
+        />
 
-        {status === 'loading' && (
-          <p role="status" className="text-zinc-400">
-            Discovering references…
+        {propStatus === 'error' && (
+          <p role="alert" className="text-red-400">
+            {propError ?? 'Could not load style options'}
           </p>
         )}
-        {status === 'error' && (
+
+        {round !== null && (
+          <section className="space-y-4">
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <RefinementBreadcrumb />
+              <div className="flex gap-2">
+                <button
+                  type="button"
+                  onClick={() => void runDiscovery({ brief, refinements })}
+                  disabled={discoverStatus === 'loading'}
+                  className="rounded-lg bg-emerald-500 px-4 py-2 font-medium text-zinc-950 transition hover:bg-emerald-400 disabled:opacity-40"
+                >
+                  {discoverStatus === 'loading' ? 'Searching…' : 'Search now'}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    resetPropositions();
+                  }}
+                  className="rounded-lg border border-zinc-700 px-4 py-2 text-zinc-300 transition hover:bg-zinc-800"
+                >
+                  Start over
+                </button>
+              </div>
+            </div>
+            <PropositionGrid />
+          </section>
+        )}
+
+        {discoverStatus === 'error' && (
           <p role="alert" className="text-red-400">
-            {error ?? 'Discovery failed'}
+            {discoverError ?? 'Discovery failed'}
           </p>
         )}
 
