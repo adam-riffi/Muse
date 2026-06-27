@@ -97,13 +97,15 @@ Milestones: `v0.1.0` seam · `v0.2.0` refine→discover→curate · `v0.3.0` syn
   (route refactored to it), `PropositionOptionSchema` + `PropositionRoundSchema`.
 - **PR #10 `feat/proposition-engine`** — DONE, merged. `createPropositionEngine` (reuses Codex
   runner + parse, preview candidates from `previewUrl`, retry-once, cache by brief+refinements).
-- **PR #11 `feat/propose-endpoint`** — DONE (on branch, CI/merge pending). `POST /propose`
-  (shared `DiscoverInputSchema` body) → `PropositionRound`; registers option preview candidates in the
-  session store so `/image/:id/thumbnail` serves them; 400/502 handling; injectable engine in
-  `buildServer`. Chosen descriptors flow into `/discover` via existing `refinements`. 123 tests.
-- **Next:** **PR #12 `feat/proposition-ui`** (frontend) — proposition card grid (one preview per
-  sub-style + label/descriptor), pick → next round / refine again / search now, refinement breadcrumb
-  state (zustand), msw-mocked multi-round flow tests. Completes Epic 3.
+- **PR #11 `feat/propose-endpoint`** — DONE, merged. `POST /propose` → `PropositionRound`; registers
+  preview candidates so `/image/:id/thumbnail` serves them; injectable engine in `buildServer`.
+- **PR #12 `feat/proposition-ui`** — DONE (on branch, CI/merge pending). Frontend: `propose()` +
+  `thumbnailUrl()` client, `usePropositionStore` (zustand: rounds + accumulated refinements),
+  `PropositionGrid` + `RefinementBreadcrumb`, presentational `BriefForm`. App orchestrates
+  brief → propose → pick (refine) → Search now → discover. msw multi-round flow test. **Epic 3 done.**
+- **Next:** **PR #13 `feat/canvas-contracts`** (Epic 4) — `@muse/shared`: `CanvasElement` union
+  (image|rect|ellipse|arrow|freedraw|text) + `BoardState {elements[], viewport}`; derive kept-set =
+  image elements on board; schema + derivation tests. Then PR #14 tldraw integration.
 - **`dev` integration:** `dev` has v0.1.0 + frontend skeleton. **GitHub PR #13 OPEN** (`dev ←
   release/epic2-rest`: chat UI + image pipeline) — merge to complete Epic 2 in `dev`.
 

@@ -1,20 +1,20 @@
 import { type FormEvent, useState } from 'react';
-import { useCandidateStore } from '../state/candidates';
 
-export function BriefForm() {
+export type BriefFormProps = {
+  onSubmit: (brief: string) => void;
+  loading: boolean;
+};
+
+export function BriefForm({ onSubmit, loading }: BriefFormProps) {
   const [brief, setBrief] = useState('');
-  const status = useCandidateStore((state) => state.status);
-  const runDiscovery = useCandidateStore((state) => state.runDiscovery);
-
-  const isLoading = status === 'loading';
-  const canSubmit = brief.trim().length > 0 && !isLoading;
+  const canSubmit = brief.trim().length > 0 && !loading;
 
   const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     if (!canSubmit) {
       return;
     }
-    void runDiscovery({ brief: brief.trim() });
+    onSubmit(brief.trim());
   };
 
   return (
@@ -34,7 +34,7 @@ export function BriefForm() {
         disabled={!canSubmit}
         className="rounded-lg bg-zinc-100 px-4 py-2 font-medium text-zinc-900 transition hover:bg-white disabled:cursor-not-allowed disabled:opacity-40"
       >
-        {isLoading ? 'Discovering…' : 'Discover references'}
+        {loading ? 'Working…' : 'Explore styles'}
       </button>
     </form>
   );
