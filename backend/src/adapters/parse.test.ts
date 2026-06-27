@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { extractFirstJsonArray, stripAnsi } from './parse.js';
+import { extractFirstJsonArray, extractFirstJsonObject, stripAnsi } from './parse.js';
 
 describe('stripAnsi', () => {
   it('removes SGR color codes', () => {
@@ -45,5 +45,30 @@ describe('extractFirstJsonArray', () => {
 
   it('returns null for an unbalanced array', () => {
     expect(extractFirstJsonArray('[{"a":1}')).toBeNull();
+  });
+});
+
+describe('extractFirstJsonObject', () => {
+  it('extracts a balanced object from surrounding prose', () => {
+    const input = 'Here is the analysis: {"mood":["calm"],"summary":"ok"} — done.';
+    expect(extractFirstJsonObject(input)).toBe('{"mood":["calm"],"summary":"ok"}');
+  });
+
+  it('handles nested objects', () => {
+    const input = '{"a":{"b":{"c":1}},"d":2}';
+    expect(extractFirstJsonObject(input)).toBe(input);
+  });
+
+  it('ignores braces inside string values', () => {
+    const input = '{"note":"a {curly} brace } here"}';
+    expect(extractFirstJsonObject(input)).toBe(input);
+  });
+
+  it('returns null for an unbalanced object', () => {
+    expect(extractFirstJsonObject('{"a":1')).toBeNull();
+  });
+
+  it('returns null when there is no object', () => {
+    expect(extractFirstJsonObject('no json here')).toBeNull();
   });
 });
