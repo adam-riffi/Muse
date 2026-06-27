@@ -21,6 +21,10 @@ export type BoardEditor = {
   createAssets: (assets: unknown[]) => void;
   createShape: (shape: unknown) => void;
   deleteShapes: (ids: string[]) => void;
+  toImage?: (
+    ids: string[],
+    opts: { format: string; background: boolean },
+  ) => Promise<{ blob: Blob } | undefined>;
 };
 
 export type BoardStore = {
@@ -31,6 +35,7 @@ export type BoardStore = {
   addCandidate: (candidate: ImageCandidate) => void;
   removeCandidate: (candidateId: string) => void;
   save: () => Promise<void>;
+  getBoardPng: () => Promise<string | null>;
 };
 
 const EMPTY_BOARD: BoardState = { elements: [], viewport: { x: 0, y: 0, zoom: 1 } };
@@ -76,4 +81,28 @@ export const useBoardStore = create<BoardStore>((set, get) => ({
   save: async () => {
     await saveBoard(get().getBoardState());
   },
+  getBoardPng: async () => {
+    const { editor } = get();
+    if (editor === null || typeof editor.toImage !== 'function') {
+      return null;
+    }
+    const ids = editor.getCurrentPageShapes().map((shape) => shape.id);
+    if (ids.length === 0) {
+      return null;
+    }
+    const result = await editor.toImage(ids, { format: 'png', background: true });
+    if (result === undefined) {
+      return null;
+    }
+    return blobToBase64(result.blob);
+  },
 }));
+
+async function blobToBase64(blob: Blob): Promise<string> {
+  const bytes = new Uint8Array(await blob.arrayBuffer());
+  let binary = '';
+  for (const byte of bytes) {
+    binary += String.fromCharCode(byte);
+  }
+  return btoa(binary);
+}

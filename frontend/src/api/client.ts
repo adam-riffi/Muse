@@ -1,4 +1,4 @@
-import type { BoardState, ImageCandidate, PropositionRound } from '@muse/shared';
+import type { BoardState, ImageCandidate, MoodboardAnalysis, PropositionRound } from '@muse/shared';
 
 const API_BASE = import.meta.env.VITE_API_BASE ?? '/api';
 
@@ -88,4 +88,39 @@ export async function saveBoard(board: BoardState): Promise<void> {
 export async function health(): Promise<{ status: string }> {
   const response = await fetch(`${API_BASE}/health`);
   return (await response.json()) as { status: string };
+}
+
+export async function synthesize(
+  imageIds: string[],
+  signal?: AbortSignal,
+): Promise<MoodboardAnalysis> {
+  const response = await fetch(`${API_BASE}/synthesize`, {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({ imageIds }),
+    signal,
+  });
+  if (!response.ok) {
+    throw new Error(`Synthesis failed with status ${response.status}`);
+  }
+  return (await response.json()) as MoodboardAnalysis;
+}
+
+export type ExportRequest = {
+  imageIds: string[];
+  analysis: MoodboardAnalysis;
+  boardPng?: string;
+};
+
+export async function exportBundle(body: ExportRequest, signal?: AbortSignal): Promise<Blob> {
+  const response = await fetch(`${API_BASE}/export`, {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify(body),
+    signal,
+  });
+  if (!response.ok) {
+    throw new Error(`Export failed with status ${response.status}`);
+  }
+  return await response.blob();
 }
