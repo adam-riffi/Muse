@@ -9,6 +9,7 @@ describe('loadConfig', () => {
       host: '127.0.0.1',
       logLevel: 'info',
       imageSource: 'openverse',
+      vlmProvider: 'anthropic',
     });
   });
 
@@ -35,5 +36,12 @@ describe('loadConfig', () => {
     expect(loadConfig({ IMAGE_SOURCE: 'none' }).imageSource).toBe('none');
     const config = loadConfig({ IMAGE_SOURCE: 'unsplash', UNSPLASH_ACCESS_KEY: 'k' });
     expect(config.unsplashAccessKey).toBe('k');
+  });
+
+  it('reads VLM settings', () => {
+    expect(loadConfig({ VLM_PROVIDER: 'none' }).vlmProvider).toBe('none');
+    const config = loadConfig({ VLM_PROVIDER: 'openai', OPENAI_API_KEY: 'k', VLM_MODEL: 'gpt-4o' });
+    expect(config.openaiApiKey).toBe('k');
+    expect(config.vlmModel).toBe('gpt-4o');
   });
 });
