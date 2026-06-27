@@ -10,7 +10,8 @@
   },
   "workspaces": [
     "shared",
-    "backend"
+    "backend",
+    "frontend"
   ],
   "scripts": {
     "lint": "eslint .",
