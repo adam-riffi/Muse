@@ -101,14 +101,18 @@ Milestones: `v0.1.0` seam · `v0.2.0` refine→discover→curate · `v0.3.0` syn
   preview candidates so `/image/:id/thumbnail` serves them; injectable engine in `buildServer`.
 - **PR #12 `feat/proposition-ui`** — DONE, merged. Proposition store + grid + breadcrumb; App
   orchestrates brief → propose → pick (refine) → Search now → discover. **Epic 3 done.**
-- **PR #13 `feat/canvas-contracts`** — DONE (on branch, CI/merge pending). `@muse/shared`:
-  `CanvasElementSchema` (discriminated union image|rect|ellipse|arrow|freedraw|text), `BoardState`,
-  `keptCandidateIds(board)` (curation gate = image-element candidate ids). 137 tests.
-- **Next:** **PR #14 `feat/canvas-integration`** (frontend) — mount **tldraw** (decided engine) with
-  grid background + pan/zoom; `BoardState ↔ tldraw` adapter (serialize/deserialize, engine isolated);
-  toolbar shell. Then #15 candidate tray drag/drop, #16 annotations, #17 board persistence.
-- **`dev` integration:** `dev` has full Epic 2 (PR #13 merged). **GitHub PR #18 OPEN** (`dev ←
-  release/epic3-propositions`, Epic 3, CI green) — for Adam to merge. Next: Epic 4 `release` PR.
+- **PR #13 `feat/canvas-contracts`** — DONE, merged. `@muse/shared`: `CanvasElementSchema` union,
+  `BoardState`, `keptCandidateIds(board)` (curation gate).
+- **PR #14 `feat/canvas-integration`** — DONE (on branch, CI/merge pending). Frontend: `board/adapter.ts`
+  (`mapTldrawShape` → CanvasElement, pure + tested), `state/board.ts` (zustand holds the tldraw editor
+  behind a `BoardEditor` slice, derives `BoardState`/kept-set), `Whiteboard.tsx` (mounts **tldraw**:
+  grid, pan/zoom, toolbar, persistenceKey), shown in App. tldraw is mocked in tests (needs a browser);
+  build bundles it (>500 kB warning — lazy-load is a follow-up). 145 tests.
+- **Next:** **PR #15 `feat/candidate-tray-dragdrop`** (frontend) — a candidate tray (discovered +
+  proposition picks) beside the canvas; drag/drop an image onto the board = keep (create a tldraw image
+  shape with `meta.candidateId`); remove = unkeep; position/scale persisted in `BoardState`.
+- **`dev` integration:** `dev` has Epics 0–3 (PR #18 merged). **GitHub PR #20 OPEN** (`dev ← Epic 4 (1)
+  canvas contracts`, CI green). Next Epic 4 dev PR after the whiteboard chunk.
 
 ## Environment (verified)
 
