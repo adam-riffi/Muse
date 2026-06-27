@@ -95,13 +95,15 @@ Milestones: `v0.1.0` seam · `v0.2.0` refine→discover→curate · `v0.3.0` syn
   `makeThumbnail` + disk `ThumbnailStore`, `GET /image/:id/thumbnail`. **Epic 2 complete.**
 - **PR #9 `feat/proposition-contracts`** — DONE, merged. `@muse/shared`: `DiscoverInputSchema`
   (route refactored to it), `PropositionOptionSchema` + `PropositionRoundSchema`.
-- **PR #10 `feat/proposition-engine`** — DONE (on branch, CI/merge pending). `adapters/`:
-  `proposition-prompt.ts` (sub-style prompt) + `proposition.ts` (`createPropositionEngine` — reuses
-  the Codex runner + parse, emits `PropositionOption[]` with preview candidates from `previewUrl`,
-  retry-once → `PropositionError`, cache by brief+refinements). Hermetic via injected runner. 119 tests.
-- **Next:** **PR #11 `feat/propose-endpoint`** — `POST /propose {brief,refinements?,n?}` →
-  `PropositionRound` (store preview candidates so `/image/:id/thumbnail` can serve them); thread chosen
-  descriptors into `/discover`. Then PR #12 proposition UI.
+- **PR #10 `feat/proposition-engine`** — DONE, merged. `createPropositionEngine` (reuses Codex
+  runner + parse, preview candidates from `previewUrl`, retry-once, cache by brief+refinements).
+- **PR #11 `feat/propose-endpoint`** — DONE (on branch, CI/merge pending). `POST /propose`
+  (shared `DiscoverInputSchema` body) → `PropositionRound`; registers option preview candidates in the
+  session store so `/image/:id/thumbnail` serves them; 400/502 handling; injectable engine in
+  `buildServer`. Chosen descriptors flow into `/discover` via existing `refinements`. 123 tests.
+- **Next:** **PR #12 `feat/proposition-ui`** (frontend) — proposition card grid (one preview per
+  sub-style + label/descriptor), pick → next round / refine again / search now, refinement breadcrumb
+  state (zustand), msw-mocked multi-round flow tests. Completes Epic 3.
 - **`dev` integration:** `dev` has v0.1.0 + frontend skeleton. **GitHub PR #13 OPEN** (`dev ←
   release/epic2-rest`: chat UI + image pipeline) — merge to complete Epic 2 in `dev`.
 
