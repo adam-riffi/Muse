@@ -3,18 +3,21 @@ import Fastify, {
   type FastifyInstance,
   type FastifyServerOptions,
 } from 'fastify';
-import type { ImageCandidate } from '@muse/shared';
+import type { ImageCandidate, PropositionRound } from '@muse/shared';
 import { discoverImages, type DiscoverImagesInput } from './adapters/codex.js';
+import { createPropositionEngine, type ProposeStylesInput } from './adapters/proposition.js';
 import type { AppConfig } from './config.js';
 import { registerDiscoverRoute } from './routes/discover.js';
 import { registerHealthRoute } from './routes/health.js';
 import { registerImageRoute } from './routes/image.js';
+import { registerProposeRoute } from './routes/propose.js';
 import { fetchImage, type FetchedImage } from './services/image-fetch.js';
 import { createSessionStore, type SessionStore } from './services/store.js';
 import { createThumbnailStore, type ThumbnailStore } from './services/thumbnails.js';
 
 export type ServerDeps = {
   discover: (input: DiscoverImagesInput) => Promise<ImageCandidate[]>;
+  propose: (input: ProposeStylesInput) => Promise<PropositionRound>;
   store: SessionStore;
   thumbnails: ThumbnailStore;
   fetchImage: (url: string) => Promise<FetchedImage>;
@@ -29,6 +32,7 @@ export function buildServer({ config, deps }: BuildServerOptions): FastifyInstan
   const app = Fastify({ logger: resolveLogger(config) });
   const store = deps?.store ?? createSessionStore();
   const discover = deps?.discover ?? ((input: DiscoverImagesInput) => discoverImages(input));
+  const propose = deps?.propose ?? createPropositionEngine().propose;
   const thumbnails = deps?.thumbnails ?? createThumbnailStore();
   const fetchImageImpl = deps?.fetchImage ?? ((url: string) => fetchImage(url));
 
@@ -51,6 +55,7 @@ export function buildServer({ config, deps }: BuildServerOptions): FastifyInstan
 
   registerHealthRoute(app);
   registerDiscoverRoute(app, { discover, store });
+  registerProposeRoute(app, { propose, store });
   registerImageRoute(app, { store, thumbnails, fetchImage: fetchImageImpl });
 
   return app;
