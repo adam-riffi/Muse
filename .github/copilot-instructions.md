@@ -90,15 +90,17 @@ Milestones: `v0.1.0` seam · `v0.2.0` refine→discover→curate · `v0.3.0` syn
   + Tailwind v4): app shell, typed API client, vite `/api` proxy, Vitest projects (node + jsdom), msw.
 - **PR #7 `feat/chat-discover-ui`** — DONE, merged (`6750871`). `useCandidateStore` (zustand),
   `BriefForm` + `CandidateGrid`, App wired with role=status/alert.
-- **PR #8 `feat/image-pipeline`** — DONE (on branch, CI/merge pending). Backend `services/`:
-  `fetchImage` (guards + timeout, injectable fetch), `averageHash`/`hammingDistance`/
-  `dedupeByImageHash` (aHash perceptual dedup), `makeThumbnail` + disk-backed `ThumbnailStore`
-  (sharp → webp), and `GET /image/:id/thumbnail` (fetch-on-demand + cache, injectable). 98 tests.
-- **Next:** **PR #9 `feat/proposition-contracts`** (Epic 3) — `@muse/shared` schemas
-  `PropositionOption {id,label,descriptor,query,preview}` + `PropositionRound`; extend discover input
-  with `refinements[]`. Then the proposition engine reuses the Codex adapter (PR #10).
-- **`dev` integration:** v0.1.0 MERGED into `dev` (`717dfde`). Stacked dev PRs open: GitHub #8
-  (frontend skeleton) ← #10 (chat UI). Image pipeline = next stacked dev PR.
+- **PR #8 `feat/image-pipeline`** — DONE, merged (`5221925`). Backend `services/`: `fetchImage`
+  (guards + timeout), aHash dedup (`averageHash`/`hammingDistance`/`dedupeByImageHash`), sharp
+  `makeThumbnail` + disk `ThumbnailStore`, `GET /image/:id/thumbnail`. **Epic 2 complete.**
+- **PR #9 `feat/proposition-contracts`** — DONE (on branch, CI/merge pending). `@muse/shared`:
+  `DiscoverInputSchema` (centralizes the request contract; route refactored to use it),
+  `PropositionOptionSchema` + `PropositionRoundSchema` (preview reuses ImageCandidate). 108 tests.
+- **Next:** **PR #10 `feat/proposition-engine`** — `proposeStyles()` reuses the Codex adapter
+  (bracket-scan + zod + retry) to emit `{label,descriptor,query}[]`; fetch one preview image per
+  variant via the image pipeline; assemble `PropositionRound`; cache by (brief+refinements) hash.
+- **`dev` integration:** `dev` has v0.1.0 + frontend skeleton. **GitHub PR #13 OPEN** (`dev ←
+  release/epic2-rest`: chat UI + image pipeline) — merge to complete Epic 2 in `dev`.
 
 ## Environment (verified)
 
@@ -143,8 +145,10 @@ scopes repo+workflow). Git identity: `Adam Riffi <211388619+adam-riffi@users.nor
 - **2026-06-27** — Frontend state: **zustand** (`useCandidateStore`). Components stay thin; the store
   owns the discovery call + status. Testing-library `cleanup()` is registered in `afterEach` (we use
   explicit vitest imports, not globals) to isolate renders.
-- **2026-06-27** — **Dev-PR cadence (Adam's request):** stacked, scoped PR into `dev` per big step,
-  each pinned to a `release/<step>` branch so scope stays stable while `dev-copilot` keeps moving.
+- **2026-06-27** — **Dev-PR cadence (Adam's request, CORRECTED):** one scoped PR per big step,
+  pinned to a `release/<step>` branch, with **base ALWAYS `dev`**. Do NOT base a dev PR on another
+  release branch — that strands the work in the release branch instead of `dev` (the original
+  #10/#12 did this; fixed via PR #13). Adam merges each into `dev`; the next is then scoped.
 - **2026-06-27** — Image pipeline uses **sharp** (native; prebuilt binaries work in CI). aHash is
   computed on an 8x8 greyscale downscale (degenerate on flat colors — tests use structured images).
   Thumbnails are webp, cached on disk by candidate id. `createThumbnailStore` is sync (`mkdirSync`)
