@@ -88,13 +88,17 @@ Milestones: `v0.1.0` seam · `v0.2.0` refine→discover→curate · `v0.3.0` syn
   `scripts/test-discover.ts`. **Validated live (12 real candidates).** **Milestone `v0.1.0`.**
 - **PR #6 `feat/frontend-skeleton`** — DONE, merged (`ad0fa22`). `@muse/frontend` (Vite 8 + React 19
   + Tailwind v4): app shell, typed API client, vite `/api` proxy, Vitest projects (node + jsdom), msw.
-- **PR #7 `feat/chat-discover-ui`** — DONE (on branch, CI/merge pending). `useCandidateStore`
-  (zustand: candidates/status/error + `runDiscovery`), `BriefForm` + `CandidateGrid`, App wired with
-  role=status/alert. testing-library cleanup registered (no Vitest globals). 80 tests; full gate green.
-- **Next:** **PR #8 `feat/image-pipeline`** — backend image fetch (guards/timeout), `sharp`
-  thumbnailing + temp store, average-hash (aHash) + hamming dedup, `GET /image/:id/thumbnail`.
-- **`dev` integration:** v0.1.0 MERGED into `dev` by Adam (`717dfde`). Open: GitHub PR #8 (`dev ←
-  release/epic2-frontend`, frontend skeleton). Next stacked dev PR = chat/discover UI big step.
+- **PR #7 `feat/chat-discover-ui`** — DONE, merged (`6750871`). `useCandidateStore` (zustand),
+  `BriefForm` + `CandidateGrid`, App wired with role=status/alert.
+- **PR #8 `feat/image-pipeline`** — DONE (on branch, CI/merge pending). Backend `services/`:
+  `fetchImage` (guards + timeout, injectable fetch), `averageHash`/`hammingDistance`/
+  `dedupeByImageHash` (aHash perceptual dedup), `makeThumbnail` + disk-backed `ThumbnailStore`
+  (sharp → webp), and `GET /image/:id/thumbnail` (fetch-on-demand + cache, injectable). 98 tests.
+- **Next:** **PR #9 `feat/proposition-contracts`** (Epic 3) — `@muse/shared` schemas
+  `PropositionOption {id,label,descriptor,query,preview}` + `PropositionRound`; extend discover input
+  with `refinements[]`. Then the proposition engine reuses the Codex adapter (PR #10).
+- **`dev` integration:** v0.1.0 MERGED into `dev` (`717dfde`). Stacked dev PRs open: GitHub #8
+  (frontend skeleton) ← #10 (chat UI). Image pipeline = next stacked dev PR.
 
 ## Environment (verified)
 
@@ -141,6 +145,10 @@ scopes repo+workflow). Git identity: `Adam Riffi <211388619+adam-riffi@users.nor
   explicit vitest imports, not globals) to isolate renders.
 - **2026-06-27** — **Dev-PR cadence (Adam's request):** stacked, scoped PR into `dev` per big step,
   each pinned to a `release/<step>` branch so scope stays stable while `dev-copilot` keeps moving.
+- **2026-06-27** — Image pipeline uses **sharp** (native; prebuilt binaries work in CI). aHash is
+  computed on an 8x8 greyscale downscale (degenerate on flat colors — tests use structured images).
+  Thumbnails are webp, cached on disk by candidate id. `createThumbnailStore` is sync (`mkdirSync`)
+  so the sync `buildServer` can create it inline; the route fetches-on-demand and caches.
 
 ## Commands
 
