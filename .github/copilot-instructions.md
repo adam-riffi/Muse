@@ -143,8 +143,15 @@ Milestones: `v0.1.0` seam · `v0.2.0` refine→discover→curate · `v0.3.0` syn
   stubbed via `page.route` — fully hermetic; new **`e2e.yml`** workflow (installs Chromium). Also
   `release.yml` (tag → tarball + GitHub Release), `codex-contract.yml` (manual self-hosted live-Codex
   smoke, `verify:codex`), `docs/RUNBOOK.md`, README finalization. **Milestone `v1.0.0`.**
-- **Roadmap COMPLETE (PRs #1–#25).** Next: open the single big PR `dev-copilot → dev` covering
-  everything since `dev`'s last state (whiteboard → propositions → synthesis → export).
+- **Roadmap COMPLETE (PRs #1–#25).** Big dev PR **#34** (`release/v1.0.0 → dev`) opened, CI+E2E green.
+- **Post-v1.0.0 — `feat/agent-cli-adapter`** (on branch, CI/merge pending). Generalized the
+  discovery/proposition seam to be engine-agnostic (`AgentRunner` = `CodexRunner`): added a **GitHub
+  Copilot CLI** adapter (`adapters/agent-runner.ts`: `runCopilotExec` drives `copilot -p …
+  --allow-all-tools --output-format json`, parses the terminal `assistant.message.data.content`),
+  selected by `AGENT_CLI` (`codex` default | `copilot`). Added **CLI detection** (`services/
+  cli-detect.ts`) surfaced on `GET /health` (`{ agent: { provider, bin, available, version } }`,
+  cached 30s) + a startup warning. Both CLIs verified live (`/health`: codex 0.135.0, copilot 1.0.65).
+  After merge: fast-forward `release/v1.0.0` to update PR #34.
 - **CI note:** `ci.yml` stays the hermetic gate (lint/format/typecheck/test/build). `e2e.yml` is a
   separate Playwright job on the same triggers; both must be green before merging a feature branch.
 - **`dev` integration:** `dev` has Epics 0–3 + Epic 4 canvas contracts (PRs #18, #20 merged).
@@ -158,6 +165,10 @@ typescript-eslint `8.62` · Prettier `3.9` · Vitest `4.1` · `gh 2.95.0` (authe
 scopes repo+workflow). Git identity: `Adam Riffi <211388619+adam-riffi@users.noreply.github.com>`.
 
 ## Decision log
+
+- **2026-06-28** — Agent CLI is pluggable behind `AgentRunner`: Codex (default) or GitHub Copilot
+  CLI, via `AGENT_CLI`. Detection is exposed on `/health` (not a hard startup gate) so the app still
+  boots without a CLI; discovery/propositions then fail clearly (502). VLM stays a separate seam.
 
 - **2026-06-27** — Three-branch model (`main`/`dev`/`dev-copilot`); I own `dev-copilot`, Adam owns
   `dev`/`main`. Branches are never deleted.
