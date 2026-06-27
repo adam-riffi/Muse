@@ -90,15 +90,24 @@ Milestones: `v0.1.0` seam · `v0.2.0` refine→discover→curate · `v0.3.0` syn
   + Tailwind v4): app shell, typed API client, vite `/api` proxy, Vitest projects (node + jsdom), msw.
 - **PR #7 `feat/chat-discover-ui`** — DONE, merged (`6750871`). `useCandidateStore` (zustand),
   `BriefForm` + `CandidateGrid`, App wired with role=status/alert.
-- **PR #8 `feat/image-pipeline`** — DONE (on branch, CI/merge pending). Backend `services/`:
-  `fetchImage` (guards + timeout, injectable fetch), `averageHash`/`hammingDistance`/
-  `dedupeByImageHash` (aHash perceptual dedup), `makeThumbnail` + disk-backed `ThumbnailStore`
-  (sharp → webp), and `GET /image/:id/thumbnail` (fetch-on-demand + cache, injectable). 98 tests.
-- **Next:** **PR #9 `feat/proposition-contracts`** (Epic 3) — `@muse/shared` schemas
-  `PropositionOption {id,label,descriptor,query,preview}` + `PropositionRound`; extend discover input
-  with `refinements[]`. Then the proposition engine reuses the Codex adapter (PR #10).
-- **`dev` integration:** v0.1.0 MERGED into `dev` (`717dfde`). Stacked dev PRs open: GitHub #8
-  (frontend skeleton) ← #10 (chat UI). Image pipeline = next stacked dev PR.
+- **PR #8 `feat/image-pipeline`** — DONE, merged (`5221925`). Backend `services/`: `fetchImage`
+  (guards + timeout), aHash dedup (`averageHash`/`hammingDistance`/`dedupeByImageHash`), sharp
+  `makeThumbnail` + disk `ThumbnailStore`, `GET /image/:id/thumbnail`. **Epic 2 complete.**
+- **PR #9 `feat/proposition-contracts`** — DONE, merged. `@muse/shared`: `DiscoverInputSchema`
+  (route refactored to it), `PropositionOptionSchema` + `PropositionRoundSchema`.
+- **PR #10 `feat/proposition-engine`** — DONE, merged. `createPropositionEngine` (reuses Codex
+  runner + parse, preview candidates from `previewUrl`, retry-once, cache by brief+refinements).
+- **PR #11 `feat/propose-endpoint`** — DONE, merged. `POST /propose` → `PropositionRound`; registers
+  preview candidates so `/image/:id/thumbnail` serves them; injectable engine in `buildServer`.
+- **PR #12 `feat/proposition-ui`** — DONE (on branch, CI/merge pending). Frontend: `propose()` +
+  `thumbnailUrl()` client, `usePropositionStore` (zustand: rounds + accumulated refinements),
+  `PropositionGrid` + `RefinementBreadcrumb`, presentational `BriefForm`. App orchestrates
+  brief → propose → pick (refine) → Search now → discover. msw multi-round flow test. **Epic 3 done.**
+- **Next:** **PR #13 `feat/canvas-contracts`** (Epic 4) — `@muse/shared`: `CanvasElement` union
+  (image|rect|ellipse|arrow|freedraw|text) + `BoardState {elements[], viewport}`; derive kept-set =
+  image elements on board; schema + derivation tests. Then PR #14 tldraw integration.
+- **`dev` integration:** `dev` has v0.1.0 + frontend skeleton. **GitHub PR #13 OPEN** (`dev ←
+  release/epic2-rest`: chat UI + image pipeline) — merge to complete Epic 2 in `dev`.
 
 ## Environment (verified)
 
@@ -143,8 +152,10 @@ scopes repo+workflow). Git identity: `Adam Riffi <211388619+adam-riffi@users.nor
 - **2026-06-27** — Frontend state: **zustand** (`useCandidateStore`). Components stay thin; the store
   owns the discovery call + status. Testing-library `cleanup()` is registered in `afterEach` (we use
   explicit vitest imports, not globals) to isolate renders.
-- **2026-06-27** — **Dev-PR cadence (Adam's request):** stacked, scoped PR into `dev` per big step,
-  each pinned to a `release/<step>` branch so scope stays stable while `dev-copilot` keeps moving.
+- **2026-06-27** — **Dev-PR cadence (Adam's request, CORRECTED):** one scoped PR per big step,
+  pinned to a `release/<step>` branch, with **base ALWAYS `dev`**. Do NOT base a dev PR on another
+  release branch — that strands the work in the release branch instead of `dev` (the original
+  #10/#12 did this; fixed via PR #13). Adam merges each into `dev`; the next is then scoped.
 - **2026-06-27** — Image pipeline uses **sharp** (native; prebuilt binaries work in CI). aHash is
   computed on an 8x8 greyscale downscale (degenerate on flat colors — tests use structured images).
   Thumbnails are webp, cached on disk by candidate id. `createThumbnailStore` is sync (`mkdirSync`)
