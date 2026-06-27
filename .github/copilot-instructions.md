@@ -73,14 +73,16 @@ Milestones: `v0.1.0` seam · `v0.2.0` refine→discover→curate · `v0.3.0` syn
 
 - **PR #1 `chore/repo-foundation`** — DONE, merged into `dev-copilot` (`0ed4244`). Monorepo root,
   TS 6 base config, ESLint 10 + Prettier, Vitest 4, CI workflow, Changesets, project docs, this doc.
-- **PR #2 `feat/shared-contracts`** — DONE (on branch, CI/merge pending). `@muse/shared` workspace
-  (zod 4): `imageId` sha256 util (subpath `@muse/shared/hash`), `ImageCandidate`, `MoodboardAnalysis`
-  (+ palette/typography/spacing sub-schemas), and export bundle schemas (`Manifest`, `DesignTokens`).
-  24 tests; full gate green.
-- **Next:** **PR #3 `feat/backend-skeleton`** — Fastify `buildServer()` factory, `config.ts` (env via
-  zod), `GET /health`, error/not-found handlers; consumes `@muse/shared`.
-- Before **PR #4** (codex adapter): run `codex --help` and pin the exact non-interactive invocation
-  in `docs/CODEX.md`.
+- **PR #2 `feat/shared-contracts`** — DONE, merged (`4f982c1`). `@muse/shared` (zod 4): `imageId`
+  sha256 (subpath `@muse/shared/hash`), `ImageCandidate`, `MoodboardAnalysis` (+ sub-schemas), export
+  bundle schemas (`Manifest`, `DesignTokens`).
+- **PR #3 `feat/backend-skeleton`** — DONE (on branch, CI/merge pending). `@muse/backend` (Fastify 5,
+  tsx): `loadConfig` (env via zod, pure/testable), `buildServer(config)` factory with zod-driven
+  logger + JSON 404 + typed error handler, `GET /health`, and an entrypoint with graceful shutdown.
+  Verified end-to-end (boots, serves /health, exits clean). 31 tests; full gate green.
+- **Next:** **PR #4 `feat/codex-adapter`** — the seam. Spawn `codex`, strip ANSI, balanced-bracket
+  JSON-array extract, zod-validate → `ImageCandidate[]`, retry-once, graceful fail with raw output.
+- Before **PR #4**: run `codex --help` and pin the exact non-interactive invocation in `docs/CODEX.md`.
 
 ## Environment (verified)
 
@@ -107,6 +109,10 @@ scopes repo+workflow). Git identity: `Adam Riffi <211388619+adam-riffi@users.nor
   behind the `@muse/shared/hash` subpath so browser consumers never bundle Node built-ins. Each
   workspace uses split tsconfigs: `tsconfig.json` (typecheck, includes tests) + `tsconfig.build.json`
   (emit src-only to `dist` with declarations).
+- **2026-06-27** — Monorepo resolution: consumers import the **built** `@muse/shared` (dist via
+  package `exports`). Root `typecheck`/`test` run `build:shared` first so dist is resolvable; no path
+  aliases. Backend: Fastify 5, `tsx` for dev/watch, `node dist/index.js` for start. `setErrorHandler`
+  is typed with the explicit `<FastifyError>` generic (Fastify v5 defaults `TError` to `unknown`).
 
 ## Commands
 
