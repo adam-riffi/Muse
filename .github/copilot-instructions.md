@@ -55,7 +55,9 @@ discipline is reused for style propositions.
 | `dev-copilot` | My dev mainline     | I merge when CI is green       |
 
 - Feature branches cut from `dev-copilot`; PR back into it; merge on green CI.
-- Milestone PRs: `dev-copilot → dev` (Adam reviews). Release: `dev → main`.
+- **PRs to `dev` = one stacked PR per "big step"** (epic/milestone). Pin each to a `release/<step>`
+  branch so its scope stays stable while work continues on `dev-copilot`; base it on the previous
+  release branch (or `dev` once that merged). Adam reviews/merges. Release: `dev → main`.
 - **Never delete branches. Never touch `main`. Do not rename the repo or change its GitHub
   description** (README edits are fine).
 - **Conventional Commits, atomic, no squash** on `dev-copilot` (preserve commit-by-commit history).
@@ -84,14 +86,19 @@ Milestones: `v0.1.0` seam · `v0.2.0` refine→discover→curate · `v0.3.0` syn
   `codex.ts` (`discoverImages`: retry-once → `CodexDiscoveryError`). Pinned in `docs/CODEX.md`.
 - **PR #5 `feat/discover-endpoint`** — DONE, merged. In-memory `SessionStore`, `POST /discover`,
   `scripts/test-discover.ts`. **Validated live (12 real candidates).** **Milestone `v0.1.0`.**
-- **PR #6 `feat/frontend-skeleton`** — DONE (on branch, CI/merge pending). `@muse/frontend`
-  (Vite 8 + React 19 + Tailwind v4): app shell, typed API client (`discover`/`health`) over
-  `@muse/shared`, vite `/api` proxy. Vitest split into **projects** (node for shared/backend, jsdom
-  for frontend) + testing-library/jest-dom + msw scaffold. 75 tests; full gate green.
-- **Next:** **PR #7 `feat/chat-discover-ui`** — brief input + submit, discover call with loading/error
-  states, candidate store (zustand), msw-mocked flow tests. (Depends on PR #6 + the discover endpoint.)
-- **Integration to `dev`:** GitHub PR #5 (`dev-copilot → dev`) is open for Adam to review/merge
-  (note: GitHub PR numbers now differ from roadmap PR numbers).
+- **PR #6 `feat/frontend-skeleton`** — DONE, merged (`ad0fa22`). `@muse/frontend` (Vite 8 + React 19
+  + Tailwind v4): app shell, typed API client, vite `/api` proxy, Vitest projects (node + jsdom), msw.
+- **PR #7 `feat/chat-discover-ui`** — DONE, merged (`6750871`). `useCandidateStore` (zustand),
+  `BriefForm` + `CandidateGrid`, App wired with role=status/alert.
+- **PR #8 `feat/image-pipeline`** — DONE (on branch, CI/merge pending). Backend `services/`:
+  `fetchImage` (guards + timeout, injectable fetch), `averageHash`/`hammingDistance`/
+  `dedupeByImageHash` (aHash perceptual dedup), `makeThumbnail` + disk-backed `ThumbnailStore`
+  (sharp → webp), and `GET /image/:id/thumbnail` (fetch-on-demand + cache, injectable). 98 tests.
+- **Next:** **PR #9 `feat/proposition-contracts`** (Epic 3) — `@muse/shared` schemas
+  `PropositionOption {id,label,descriptor,query,preview}` + `PropositionRound`; extend discover input
+  with `refinements[]`. Then the proposition engine reuses the Codex adapter (PR #10).
+- **`dev` integration:** v0.1.0 MERGED into `dev` (`717dfde`). Stacked dev PRs open: GitHub #8
+  (frontend skeleton) ← #10 (chat UI). Image pipeline = next stacked dev PR.
 
 ## Environment (verified)
 
@@ -133,6 +140,15 @@ scopes repo+workflow). Git identity: `Adam Riffi <211388619+adam-riffi@users.nor
   **projects** (one config) — `node` env for shared/backend, `jsdom` + React plugin for frontend —
   so `npm run test` stays a single command. msw (`msw/node`) mocks the backend in component/client
   tests. Frontend calls the backend through a vite `/api` proxy (`VITE_API_BASE`).
+- **2026-06-27** — Frontend state: **zustand** (`useCandidateStore`). Components stay thin; the store
+  owns the discovery call + status. Testing-library `cleanup()` is registered in `afterEach` (we use
+  explicit vitest imports, not globals) to isolate renders.
+- **2026-06-27** — **Dev-PR cadence (Adam's request):** stacked, scoped PR into `dev` per big step,
+  each pinned to a `release/<step>` branch so scope stays stable while `dev-copilot` keeps moving.
+- **2026-06-27** — Image pipeline uses **sharp** (native; prebuilt binaries work in CI). aHash is
+  computed on an 8x8 greyscale downscale (degenerate on flat colors — tests use structured images).
+  Thumbnails are webp, cached on disk by candidate id. `createThumbnailStore` is sync (`mkdirSync`)
+  so the sync `buildServer` can create it inline; the route fetches-on-demand and caches.
 
 ## Commands
 
