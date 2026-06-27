@@ -108,9 +108,11 @@ Milestones: `v0.1.0` seam · `v0.2.0` refine→discover→curate · `v0.3.0` syn
 - **PR #15 `feat/candidate-tray-dragdrop`** — DONE (on branch, CI/merge pending). `board/place.ts`
   (pure asset/shape builders), board store `addCandidate`/`removeCandidate`, `CandidateTray` beside
   the canvas (Add to board → kept tldraw image shape with `meta.candidateId`). 151 tests.
-- **Next:** **PR #16 `feat/annotations-shapes`** — tldraw already provides shapes/arrows/draw/text via
-  its toolbar; extend `mapTldrawShape` to also map arrow/freedraw/text into `BoardState` so annotations
-  are captured (not just in the PNG). Then PR #17 board persistence (`POST/GET /board`).
+- **PR #16 `feat/annotations-shapes`** — DONE (on branch, CI/merge pending). tldraw's toolbar already
+  provides shape/arrow/draw/text tools; extended `mapTldrawShape` to capture text/arrow/freedraw into
+  `BoardState` (board.json fidelity; board PNG is the visual source of truth). 154 tests.
+- **Next:** **PR #17 `feat/board-persistence`** — `POST /board` (save `BoardState`) + `GET /board`
+  (load) via session store; client autosave (debounced) + restore. Completes Epic 4 → **v0.2.0**.
 - **`dev` integration:** `dev` has Epics 0–3 + Epic 4 canvas contracts (PRs #18, #20 merged).
   Whiteboard chunk (PR #14+) on `dev-copilot` awaits the next `dev` PR. (Per user: one big `dev` PR
   at the end of the run.)
