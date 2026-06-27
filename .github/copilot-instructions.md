@@ -93,12 +93,15 @@ Milestones: `v0.1.0` seam · `v0.2.0` refine→discover→curate · `v0.3.0` syn
 - **PR #8 `feat/image-pipeline`** — DONE, merged (`5221925`). Backend `services/`: `fetchImage`
   (guards + timeout), aHash dedup (`averageHash`/`hammingDistance`/`dedupeByImageHash`), sharp
   `makeThumbnail` + disk `ThumbnailStore`, `GET /image/:id/thumbnail`. **Epic 2 complete.**
-- **PR #9 `feat/proposition-contracts`** — DONE (on branch, CI/merge pending). `@muse/shared`:
-  `DiscoverInputSchema` (centralizes the request contract; route refactored to use it),
-  `PropositionOptionSchema` + `PropositionRoundSchema` (preview reuses ImageCandidate). 108 tests.
-- **Next:** **PR #10 `feat/proposition-engine`** — `proposeStyles()` reuses the Codex adapter
-  (bracket-scan + zod + retry) to emit `{label,descriptor,query}[]`; fetch one preview image per
-  variant via the image pipeline; assemble `PropositionRound`; cache by (brief+refinements) hash.
+- **PR #9 `feat/proposition-contracts`** — DONE, merged. `@muse/shared`: `DiscoverInputSchema`
+  (route refactored to it), `PropositionOptionSchema` + `PropositionRoundSchema`.
+- **PR #10 `feat/proposition-engine`** — DONE (on branch, CI/merge pending). `adapters/`:
+  `proposition-prompt.ts` (sub-style prompt) + `proposition.ts` (`createPropositionEngine` — reuses
+  the Codex runner + parse, emits `PropositionOption[]` with preview candidates from `previewUrl`,
+  retry-once → `PropositionError`, cache by brief+refinements). Hermetic via injected runner. 119 tests.
+- **Next:** **PR #11 `feat/propose-endpoint`** — `POST /propose {brief,refinements?,n?}` →
+  `PropositionRound` (store preview candidates so `/image/:id/thumbnail` can serve them); thread chosen
+  descriptors into `/discover`. Then PR #12 proposition UI.
 - **`dev` integration:** `dev` has v0.1.0 + frontend skeleton. **GitHub PR #13 OPEN** (`dev ←
   release/epic2-rest`: chat UI + image pipeline) — merge to complete Epic 2 in `dev`.
 
