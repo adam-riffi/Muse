@@ -19,6 +19,8 @@ Set in `backend/.env` (never commit secrets):
 | Var | Default | Purpose |
 | --- | --- | --- |
 | `PORT` | `3001` | backend port |
+| `AGENT_CLI` | `codex` | which agent CLI drives discovery/propositions: `codex` or `copilot` |
+| `CODEX_BIN` / `COPILOT_BIN` | `codex` / `copilot` | override the CLI binary path/name |
 | `IMAGE_SOURCE` | `openverse` | `none` \| `openverse` (keyless) \| `unsplash` |
 | `UNSPLASH_ACCESS_KEY` | — | required when `IMAGE_SOURCE=unsplash` |
 | `VLM_PROVIDER` | `anthropic` | `none` \| `anthropic` \| `openai` |
@@ -26,6 +28,18 @@ Set in `backend/.env` (never commit secrets):
 | `VLM_MODEL` | provider default | override the model |
 
 With `VLM_PROVIDER=none` (or no key), `/synthesize` returns **501** — discovery and curation still work.
+
+### Agent CLI detection
+
+`GET /health` reports the detected agent CLI so you can confirm the backend can drive it:
+
+```json
+{ "status": "ok", "agent": { "provider": "codex", "bin": "codex", "available": true, "version": "0.135.0" } }
+```
+
+The backend spawns the configured CLI (`AGENT_CLI`, default `codex`) on demand; it also logs a
+warning at startup if the binary is not on `PATH`. Switch engines with `AGENT_CLI=copilot` (uses the
+GitHub Copilot CLI's non-interactive `-p … --allow-all-tools --output-format json` mode).
 
 ## CI/CD
 

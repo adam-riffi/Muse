@@ -4,6 +4,7 @@ import Fastify, {
   type FastifyServerOptions,
 } from 'fastify';
 import type { ImageCandidate, PropositionRound } from '@muse/shared';
+import { resolveAgentRunner } from './adapters/agent-runner.js';
 import { discoverImages, type DiscoverImagesInput } from './adapters/codex.js';
 import { createPropositionEngine, type ProposeStylesInput } from './adapters/proposition.js';
 import type { AppConfig } from './config.js';
@@ -15,6 +16,7 @@ import { registerImageRoute } from './routes/image.js';
 import { registerImagesSearchRoute } from './routes/images-search.js';
 import { registerProposeRoute } from './routes/propose.js';
 import { registerSynthesizeRoute, type SynthesizeFn } from './routes/synthesize.js';
+import { type CliStatus, detectAgentCli } from './services/cli-detect.js';
 import { createExporter, type Exporter } from './services/export-bundle.js';
 import { fetchImage, type FetchedImage } from './services/image-fetch.js';
 import { createImageSource, type ImageSourceProvider } from './services/image-source.js';
@@ -33,6 +35,7 @@ export type ServerDeps = {
   imageSource: ImageSourceProvider | null;
   synthesize: SynthesizeFn | null;
   exporter: Exporter;
+  detectCli: () => Promise<CliStatus>;
 };
 
 export type BuildServerOptions = {
@@ -43,8 +46,10 @@ export type BuildServerOptions = {
 export function buildServer({ config, deps }: BuildServerOptions): FastifyInstance {
   const app = Fastify({ logger: resolveLogger(config) });
   const store = deps?.store ?? createSessionStore();
-  const discover = deps?.discover ?? ((input: DiscoverImagesInput) => discoverImages(input));
-  const propose = deps?.propose ?? createPropositionEngine().propose;
+  const runner = resolveAgentRunner(config);
+  const discover =
+    deps?.discover ?? ((input: DiscoverImagesInput) => discoverImages(input, { runner }));
+  const propose = deps?.propose ?? createPropositionEngine({ runner }).propose;
   const thumbnails = deps?.thumbnails ?? createThumbnailStore();
   const fetchImageImpl = deps?.fetchImage ?? ((url: string) => fetchImage(url));
   const imageSource = deps?.imageSource ?? createImageSource(config);
@@ -56,6 +61,7 @@ export function buildServer({ config, deps }: BuildServerOptions): FastifyInstan
       ? createSynthesizer({ store, fetchImage: fetchImageImpl, analyzer }).synthesize
       : null);
   const exporter = deps?.exporter ?? createExporter({ store, fetchImage: fetchImageImpl });
+  const detectCli = deps?.detectCli ?? (() => detectAgentCli(config));
 
   app.setNotFoundHandler((request, reply) => {
     void reply.code(404).send({
@@ -74,7 +80,7 @@ export function buildServer({ config, deps }: BuildServerOptions): FastifyInstan
     });
   });
 
-  registerHealthRoute(app);
+  registerHealthRoute(app, { detect: detectCli });
   registerDiscoverRoute(app, { discover, store });
   registerProposeRoute(app, { propose, store });
   registerImageRoute(app, { store, thumbnails, fetchImage: fetchImageImpl });

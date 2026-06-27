@@ -50,7 +50,7 @@ HTTP API:
 
 | Method & path | Purpose |
 | --- | --- |
-| `GET /health` | liveness |
+| `GET /health` | liveness + detected agent CLI (`{ agent: { provider, bin, available, version } }`) |
 | `POST /propose` | style propositions (`{ brief, refinements?, n? }` → `PropositionRound`) |
 | `POST /discover` | discovery (`{ brief, count?, refinements? }` → `ImageCandidate[]`) |
 | `GET /image/:id/thumbnail` | cached thumbnail for a candidate |
@@ -59,8 +59,11 @@ HTTP API:
 | `POST /synthesize` | `{ imageIds }` → `MoodboardAnalysis` (palette + VLM) |
 | `POST /export` | `{ imageIds, analysis, boardPng? }` → streamed zip bundle |
 
-Configuration is read from the backend env (see `backend/.env.example`): `IMAGE_SOURCE`,
-`UNSPLASH_ACCESS_KEY`, `VLM_PROVIDER`, `ANTHROPIC_API_KEY` / `OPENAI_API_KEY`, `VLM_MODEL`, `PORT`.
+Configuration is read from the backend env (see `backend/.env.example`): `AGENT_CLI`
+(`codex` default, or `copilot`), `CODEX_BIN`/`COPILOT_BIN`, `IMAGE_SOURCE`, `UNSPLASH_ACCESS_KEY`,
+`VLM_PROVIDER`, `ANTHROPIC_API_KEY` / `OPENAI_API_KEY`, `VLM_MODEL`, `PORT`. `GET /health` reports
+which agent CLI was detected (provider + version), so you can confirm the backend can drive your
+Codex or GitHub Copilot CLI.
 
 ## Run the frontend
 
