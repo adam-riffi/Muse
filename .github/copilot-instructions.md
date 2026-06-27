@@ -76,13 +76,18 @@ Milestones: `v0.1.0` seam · `v0.2.0` refine→discover→curate · `v0.3.0` syn
 - **PR #2 `feat/shared-contracts`** — DONE, merged (`4f982c1`). `@muse/shared` (zod 4): `imageId`
   sha256 (subpath `@muse/shared/hash`), `ImageCandidate`, `MoodboardAnalysis` (+ sub-schemas), export
   bundle schemas (`Manifest`, `DesignTokens`).
-- **PR #3 `feat/backend-skeleton`** — DONE (on branch, CI/merge pending). `@muse/backend` (Fastify 5,
-  tsx): `loadConfig` (env via zod, pure/testable), `buildServer(config)` factory with zod-driven
-  logger + JSON 404 + typed error handler, `GET /health`, and an entrypoint with graceful shutdown.
-  Verified end-to-end (boots, serves /health, exits clean). 31 tests; full gate green.
-- **Next:** **PR #4 `feat/codex-adapter`** — the seam. Spawn `codex`, strip ANSI, balanced-bracket
-  JSON-array extract, zod-validate → `ImageCandidate[]`, retry-once, graceful fail with raw output.
-- Before **PR #4**: run `codex --help` and pin the exact non-interactive invocation in `docs/CODEX.md`.
+- **PR #3 `feat/backend-skeleton`** — DONE, merged (`05327ed`). `@muse/backend` (Fastify 5, tsx):
+  `loadConfig`, `buildServer(config)` (logger + JSON 404 + typed error handler), `GET /health`,
+  entrypoint with graceful shutdown.
+- **PR #4 `feat/codex-adapter`** — DONE (on branch, CI/merge pending). THE seam, isolated in
+  `backend/src/adapters/`: `parse.ts` (stripAnsi + balanced-bracket array scan), `codex-prompt.ts`
+  (JSON-only discovery prompt + strict retry reminder), `normalize.ts` (RawDiscoveryItem → validated
+  `ImageCandidate[]`, drop-invalid + de-dup), `codex-runner.ts` (verified `codex exec` invocation +
+  JSONL fallback + spawn glue), `codex.ts` (`discoverImages`: retry-once → `CodexDiscoveryError` with
+  raw output). 65 tests, hermetic via injected runner. CLI surface pinned in `docs/CODEX.md`.
+- **Next:** **PR #5 `feat/discover-endpoint`** — in-memory session store, `POST /discover` (zod body)
+  → `ImageCandidate[]`, `scripts/test-discover.ts` (live seam check), integration test (mocked
+  adapter). **Milestone `v0.1.0`.**
 
 ## Environment (verified)
 
@@ -113,6 +118,12 @@ scopes repo+workflow). Git identity: `Adam Riffi <211388619+adam-riffi@users.nor
   package `exports`). Root `typecheck`/`test` run `build:shared` first so dist is resolvable; no path
   aliases. Backend: Fastify 5, `tsx` for dev/watch, `node dist/index.js` for start. `setErrorHandler`
   is typed with the explicit `<FastifyError>` generic (Fastify v5 defaults `TError` to `unknown`).
+- **2026-06-27** — Codex seam (verified `codex-cli 0.135.0`): invoke `codex exec --json --color never
+  --skip-git-repo-check --ephemeral -o <tmp> <prompt>`, stdin ignored. Parse the last-message file
+  (fallback: last `agent_message` in JSONL) → stripAnsi → balanced-bracket array → zod. Retry once,
+  then `CodexDiscoveryError` with raw output. The adapter is injected a `CodexRunner` so tests are
+  hermetic (no real spawn); the live invocation is exercised by `scripts/test-discover.ts` in PR #5.
+  Full surface pinned in `docs/CODEX.md`.
 
 ## Commands
 
