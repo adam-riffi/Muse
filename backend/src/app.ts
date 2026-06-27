@@ -7,13 +7,22 @@ import type { ImageCandidate, PropositionRound } from '@muse/shared';
 import { discoverImages, type DiscoverImagesInput } from './adapters/codex.js';
 import { createPropositionEngine, type ProposeStylesInput } from './adapters/proposition.js';
 import type { AppConfig } from './config.js';
+import { registerBoardRoute } from './routes/board.js';
 import { registerDiscoverRoute } from './routes/discover.js';
+import { registerExportRoute } from './routes/export.js';
 import { registerHealthRoute } from './routes/health.js';
 import { registerImageRoute } from './routes/image.js';
+import { registerImagesSearchRoute } from './routes/images-search.js';
 import { registerProposeRoute } from './routes/propose.js';
+import { registerSynthesizeRoute, type SynthesizeFn } from './routes/synthesize.js';
+import { createExporter, type Exporter } from './services/export-bundle.js';
 import { fetchImage, type FetchedImage } from './services/image-fetch.js';
+import { createImageSource, type ImageSourceProvider } from './services/image-source.js';
 import { createSessionStore, type SessionStore } from './services/store.js';
+import { createSynthesizer } from './services/synthesize.js';
 import { createThumbnailStore, type ThumbnailStore } from './services/thumbnails.js';
+import { createVlmAnalyzer } from './services/vlm.js';
+import { createVlmProvider } from './services/vlm-providers.js';
 
 export type ServerDeps = {
   discover: (input: DiscoverImagesInput) => Promise<ImageCandidate[]>;
@@ -21,6 +30,9 @@ export type ServerDeps = {
   store: SessionStore;
   thumbnails: ThumbnailStore;
   fetchImage: (url: string) => Promise<FetchedImage>;
+  imageSource: ImageSourceProvider | null;
+  synthesize: SynthesizeFn | null;
+  exporter: Exporter;
 };
 
 export type BuildServerOptions = {
@@ -35,6 +47,15 @@ export function buildServer({ config, deps }: BuildServerOptions): FastifyInstan
   const propose = deps?.propose ?? createPropositionEngine().propose;
   const thumbnails = deps?.thumbnails ?? createThumbnailStore();
   const fetchImageImpl = deps?.fetchImage ?? ((url: string) => fetchImage(url));
+  const imageSource = deps?.imageSource ?? createImageSource(config);
+  const vlmProvider = createVlmProvider(config);
+  const analyzer = vlmProvider !== null ? createVlmAnalyzer({ provider: vlmProvider }) : null;
+  const synthesize =
+    deps?.synthesize ??
+    (analyzer !== null
+      ? createSynthesizer({ store, fetchImage: fetchImageImpl, analyzer }).synthesize
+      : null);
+  const exporter = deps?.exporter ?? createExporter({ store, fetchImage: fetchImageImpl });
 
   app.setNotFoundHandler((request, reply) => {
     void reply.code(404).send({
@@ -57,6 +78,10 @@ export function buildServer({ config, deps }: BuildServerOptions): FastifyInstan
   registerDiscoverRoute(app, { discover, store });
   registerProposeRoute(app, { propose, store });
   registerImageRoute(app, { store, thumbnails, fetchImage: fetchImageImpl });
+  registerImagesSearchRoute(app, { imageSource, store });
+  registerSynthesizeRoute(app, { synthesize });
+  registerExportRoute(app, { exporter });
+  registerBoardRoute(app, { store });
 
   return app;
 }

@@ -5,8 +5,9 @@ Muse is an **agent-broker / orchestration layer**: it drives the locally install
 discover image references from a natural-language brief, lets you curate them on a whiteboard, and
 synthesizes a portable design-intent bundle you can hand to a design agent.
 
-> Status: building toward v1.0.0. **v0.1.0 — the Codex discovery seam — is working** (see below).
-> Architecture: [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) · Codex integration: [docs/CODEX.md](docs/CODEX.md) · Contributing: [CONTRIBUTING.md](CONTRIBUTING.md).
+> Status: **v1.0.0** — the full pipeline works end to end: refine → discover → curate on a
+> whiteboard → synthesize → export a portable bundle.
+> Architecture: [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) · Codex integration: [docs/CODEX.md](docs/CODEX.md) · Operating guide: [docs/RUNBOOK.md](docs/RUNBOOK.md) · Contributing: [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ## Runtime constraint
 
@@ -45,13 +46,38 @@ npm run -w @muse/backend dev      # tsx watch (http://127.0.0.1:3001)
 npm run -w @muse/backend start
 ```
 
-Endpoints: `GET /health`, `POST /discover` (`{ brief, count?, refinements? }` → `ImageCandidate[]`).
-Configuration is read from the backend env (see `backend/.env.example`).
+HTTP API:
+
+| Method & path | Purpose |
+| --- | --- |
+| `GET /health` | liveness |
+| `POST /propose` | style propositions (`{ brief, refinements?, n? }` → `PropositionRound`) |
+| `POST /discover` | discovery (`{ brief, count?, refinements? }` → `ImageCandidate[]`) |
+| `GET /image/:id/thumbnail` | cached thumbnail for a candidate |
+| `GET /images/search` | optional image-source search (`?q=&n=`, Openverse/Unsplash) |
+| `GET` / `POST /board` | load / save the whiteboard `BoardState` |
+| `POST /synthesize` | `{ imageIds }` → `MoodboardAnalysis` (palette + VLM) |
+| `POST /export` | `{ imageIds, analysis, boardPng? }` → streamed zip bundle |
+
+Configuration is read from the backend env (see `backend/.env.example`): `IMAGE_SOURCE`,
+`UNSPLASH_ACCESS_KEY`, `VLM_PROVIDER`, `ANTHROPIC_API_KEY` / `OPENAI_API_KEY`, `VLM_MODEL`, `PORT`.
+
+## Run the frontend
+
+```bash
+npm run -w @muse/frontend dev     # Vite (http://localhost:5173), proxies /api to the backend
+```
+
+The UI walks the full flow: enter a brief → pick a sub-style → **Search now** → drag references onto
+the **whiteboard** (grid canvas with shapes/arrows/text) → **Export bundle** (downloads a zip with the
+images, `manifest.json`, `design-tokens.json`, `design-brief.md`, `prompt.md`, `board.json`, and the
+rasterized `board.png`).
 
 ## Development
 
 ```bash
 npm run lint && npm run format:check && npm run typecheck && npm run test && npm run build
+npm run test:e2e   # Playwright happy path (hermetic: /api is stubbed, no backend/Codex/VLM)
 ```
 
 ## License

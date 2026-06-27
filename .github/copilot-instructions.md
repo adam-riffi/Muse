@@ -101,14 +101,55 @@ Milestones: `v0.1.0` seam · `v0.2.0` refine→discover→curate · `v0.3.0` syn
   preview candidates so `/image/:id/thumbnail` serves them; injectable engine in `buildServer`.
 - **PR #12 `feat/proposition-ui`** — DONE, merged. Proposition store + grid + breadcrumb; App
   orchestrates brief → propose → pick (refine) → Search now → discover. **Epic 3 done.**
-- **PR #13 `feat/canvas-contracts`** — DONE (on branch, CI/merge pending). `@muse/shared`:
-  `CanvasElementSchema` (discriminated union image|rect|ellipse|arrow|freedraw|text), `BoardState`,
-  `keptCandidateIds(board)` (curation gate = image-element candidate ids). 137 tests.
-- **Next:** **PR #14 `feat/canvas-integration`** (frontend) — mount **tldraw** (decided engine) with
-  grid background + pan/zoom; `BoardState ↔ tldraw` adapter (serialize/deserialize, engine isolated);
-  toolbar shell. Then #15 candidate tray drag/drop, #16 annotations, #17 board persistence.
-- **`dev` integration:** `dev` has full Epic 2 (PR #13 merged). **GitHub PR #18 OPEN** (`dev ←
-  release/epic3-propositions`, Epic 3, CI green) — for Adam to merge. Next: Epic 4 `release` PR.
+- **PR #13 `feat/canvas-contracts`** — DONE, merged. `@muse/shared`: `CanvasElementSchema` union,
+  `BoardState`, `keptCandidateIds(board)` (curation gate).
+- **PR #14 `feat/canvas-integration`** — DONE, merged (+ `fix/tldraw-dependency` PR #22). tldraw
+  Whiteboard mounted (board adapter + store, grid, persistence). tldraw mocked in tests.
+- **PR #15 `feat/candidate-tray-dragdrop`** — DONE, merged. `board/place.ts` (pure asset/shape
+  builders), board store `addCandidate`/`removeCandidate`, `CandidateTray` beside the canvas
+  (Add to board → kept tldraw image shape with `meta.candidateId`).
+- **PR #16 `feat/annotations-shapes`** — DONE, merged. tldraw's toolbar already provides
+  shape/arrow/draw/text tools; extended `mapTldrawShape` to capture text/arrow/freedraw into
+  `BoardState` (board.json fidelity; board PNG is the visual source of truth).
+- **PR #17 `feat/board-persistence`** — DONE, merged. Session store `getBoard`/`setBoard`
+  (+`clear` nulls it); `GET /board` (stored or empty) + `POST /board` (zod-validated → 204 / 400);
+  client `loadBoard`/`saveBoard`; board store `save()`; debounced autosave wired into the Whiteboard
+  `onMount` (server save complements tldraw's local IndexedDB restore via `persistenceKey`).
+  **Completes Epic 4 → milestone `v0.2.0`.**
+- **PR #18 `feat/image-api-source`** — DONE, merged. Optional permissive image source:
+  `services/image-source.ts` provider interface + keyless **Openverse** adapter (default) +
+  **Unsplash** behind `UNSPLASH_ACCESS_KEY`, selected by `IMAGE_SOURCE`. `GET /images/search`
+  → `ImageCandidate[]` (stored); 400/501/502. Frontend `searchImages` + msw handler.
+- **PR #19 `feat/palette-extraction`** — DONE, merged. `services/palette.ts`: `extractPalette(buffers)`
+  aggregates node-vibrant swatches → role-tagged hexes (dominant/accent/neutral/background).
+  Determinism boundary (pixels only); golden-fixture tests.
+- **PR #20 `feat/vlm-analysis`** — DONE, merged. `services/vlm.ts` (analyzer) +
+  `services/vlm-providers.ts` (Anthropic default / OpenAI). One multi-image call → non-palette half
+  of `MoodboardAnalysis`; defensive parse (`extractFirstJsonObject` + zod + retry), image-set cache.
+  Config: `VLM_PROVIDER`, `ANTHROPIC_API_KEY`, `OPENAI_API_KEY`, `VLM_MODEL`.
+- **PR #21 `feat/synthesize-endpoint`** — DONE, merged. `services/synthesize.ts` joins the two
+  halves: resolve kept ids → fetch bytes → `extractPalette` + VLM analyze → merged
+  `MoodboardAnalysis`. `POST /synthesize {imageIds}`; 400 / 501 / 502; synthesizer injectable.
+- **PR #22 `feat/export-renderers`** — DONE, merged. `backend/src/render/`: pure renderers —
+  `renderDesignTokens`/`renderManifest`/`renderDesignBrief`/`renderPrompt`. No IO/model calls.
+  **Milestone `v0.3.0`**.
+- **PR #23 `feat/export-bundle`** — DONE, merged. `services/export-bundle.ts`: `createExporter` zips
+  (deterministic, in-memory via **fflate**) kept images + manifest/tokens/brief/prompt + board.json +
+  optional client `board.png`. `POST /export {imageIds, analysis, boardPng?}` streams `application/zip`.
+- **PR #24 `feat/export-panel-ui`** — DONE, merged. Frontend export panel: `synthesize`/
+  `exportBundle` client, board-store `getBoardPng()`, export store, accessible `ExportPanel` in App.
+- **PR #25 `chore/e2e-and-release`** — DONE (on branch, CI/merge pending). Playwright happy-path e2e
+  (`frontend/e2e/`, `playwright.config.ts`, root `test:e2e`) against the built SPA with `/api`
+  stubbed via `page.route` — fully hermetic; new **`e2e.yml`** workflow (installs Chromium). Also
+  `release.yml` (tag → tarball + GitHub Release), `codex-contract.yml` (manual self-hosted live-Codex
+  smoke, `verify:codex`), `docs/RUNBOOK.md`, README finalization. **Milestone `v1.0.0`.**
+- **Roadmap COMPLETE (PRs #1–#25).** Next: open the single big PR `dev-copilot → dev` covering
+  everything since `dev`'s last state (whiteboard → propositions → synthesis → export).
+- **CI note:** `ci.yml` stays the hermetic gate (lint/format/typecheck/test/build). `e2e.yml` is a
+  separate Playwright job on the same triggers; both must be green before merging a feature branch.
+- **`dev` integration:** `dev` has Epics 0–3 + Epic 4 canvas contracts (PRs #18, #20 merged).
+  Whiteboard chunk (PR #14+) on `dev-copilot` awaits the next `dev` PR. (Per user: one big `dev` PR
+  at the end of the run.)
 
 ## Environment (verified)
 

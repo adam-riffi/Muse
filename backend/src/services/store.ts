@@ -1,4 +1,4 @@
-import type { ImageCandidate } from '@muse/shared';
+import type { BoardState, ImageCandidate } from '@muse/shared';
 
 export type SessionStore = {
   putCandidates(candidates: readonly ImageCandidate[]): void;
@@ -7,12 +7,16 @@ export type SessionStore = {
   allCandidates(): ImageCandidate[];
   size(): number;
   clear(): void;
+  getBoard(): BoardState | null;
+  setBoard(board: BoardState): void;
 };
 
 // In-memory, single-session store for the MVP (auth/multi-user are non-goals). Indexes the most
-// recently discovered candidates by id so later stages (synthesis/export) can resolve the kept set.
+// recently discovered candidates by id so later stages (synthesis/export) can resolve the kept set,
+// and holds the latest persisted whiteboard BoardState.
 export function createSessionStore(): SessionStore {
   const candidates = new Map<string, ImageCandidate>();
+  let board: BoardState | null = null;
 
   return {
     putCandidates(incoming) {
@@ -41,6 +45,13 @@ export function createSessionStore(): SessionStore {
     },
     clear() {
       candidates.clear();
+      board = null;
+    },
+    getBoard() {
+      return board;
+    },
+    setBoard(next) {
+      board = next;
     },
   };
 }

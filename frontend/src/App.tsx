@@ -1,7 +1,10 @@
 import { BriefForm } from './components/BriefForm';
 import { CandidateGrid } from './components/CandidateGrid';
+import { CandidateTray } from './components/CandidateTray';
+import { ExportPanel } from './components/ExportPanel';
 import { PropositionGrid } from './components/PropositionGrid';
 import { RefinementBreadcrumb } from './components/RefinementBreadcrumb';
+import { Whiteboard } from './components/Whiteboard';
 import { useCandidateStore } from './state/candidates';
 import { usePropositionStore } from './state/propositions';
 
@@ -20,11 +23,11 @@ export function App() {
 
   return (
     <main className="min-h-screen bg-zinc-950 text-zinc-100">
-      <div className="mx-auto max-w-5xl space-y-8 px-6 py-10">
+      <div className="mx-auto max-w-6xl space-y-8 px-6 py-10">
         <header className="space-y-1">
           <h1 className="text-3xl font-semibold tracking-tight">Muse</h1>
           <p className="text-zinc-400">
-            Describe a project; refine the style; discover references.
+            Describe a project; refine the style; discover references; curate.
           </p>
         </header>
 
@@ -74,6 +77,21 @@ export function App() {
         )}
 
         <CandidateGrid />
+
+        <section aria-label="Whiteboard" className="space-y-3">
+          <h2 className="text-lg font-medium">Whiteboard</h2>
+          <p className="text-sm text-zinc-500">
+            Add references to the board and annotate to shape your direction.
+          </p>
+          <div className="flex gap-4">
+            <CandidateTray />
+            <div className="min-w-0 flex-1">
+              <Whiteboard />
+            </div>
+          </div>
+        </section>
+
+        <ExportPanel />
       </div>
     </main>
   );
