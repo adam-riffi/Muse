@@ -127,14 +127,17 @@ Milestones: `v0.1.0` seam · `v0.2.0` refine→discover→curate · `v0.3.0` syn
   `services/vlm-providers.ts` (Anthropic default / OpenAI). One multi-image call → non-palette half
   of `MoodboardAnalysis`; defensive parse (`extractFirstJsonObject` + zod + retry), image-set cache.
   Config: `VLM_PROVIDER`, `ANTHROPIC_API_KEY`, `OPENAI_API_KEY`, `VLM_MODEL`.
-- **PR #21 `feat/synthesize-endpoint`** — DONE (on branch, CI/merge pending). `services/synthesize.ts`
-  joins the two halves: resolve kept ids → fetch bytes → `extractPalette` (deterministic) + VLM
-  analyze → merged `MoodboardAnalysis`. `POST /synthesize {imageIds}`; 400 (unknown/empty) / 501 (no
-  VLM) / 502 (VLM parse fail). Synthesizer injectable in `buildServer`. 197 tests.
-- **Next:** **PR #22 `feat/export-renderers`** — pure functions rendering the bundle artifacts from a
-  `MoodboardAnalysis` + kept candidates: `design-tokens.json`, `design-brief.md`, `prompt.md`,
-  `manifest.json`. Snapshot tests; assert zero model calls (renderers stay pure). → **`v0.3.0`**.
-  Then Epic 7: `feat/export-bundle` (zip) → `feat/export-panel-ui` → `chore/e2e-and-release` → `v1.0.0`.
+- **PR #21 `feat/synthesize-endpoint`** — DONE, merged. `services/synthesize.ts` joins the two
+  halves: resolve kept ids → fetch bytes → `extractPalette` + VLM analyze → merged
+  `MoodboardAnalysis`. `POST /synthesize {imageIds}`; 400 / 501 / 502; synthesizer injectable.
+- **PR #22 `feat/export-renderers`** — DONE (on branch, CI/merge pending). `backend/src/render/`:
+  pure deterministic renderers — `renderDesignTokens` → `design-tokens.json`, `renderManifest` →
+  `manifest.json`, `renderDesignBrief` → `design-brief.md`, `renderPrompt` → agent-ready `prompt.md`.
+  No IO, no model calls. 202 tests. **Milestone `v0.3.0`** (synthesis produces all bundle artifacts).
+- **Next:** **PR #23 `feat/export-bundle`** — `archiver` zip: `images/` + `manifest.json` +
+  `design-tokens.json` + `design-brief.md` + `prompt.md` + `board.json` + rasterized `board.png`;
+  `GET /export` streams the zip. Then `feat/export-panel-ui` (download + a11y) and
+  `chore/e2e-and-release` (Playwright happy path + `release.yml` + `codex-contract.yml`) → **`v1.0.0`**.
 - **`dev` integration:** `dev` has Epics 0–3 + Epic 4 canvas contracts (PRs #18, #20 merged).
   Whiteboard chunk (PR #14+) on `dev-copilot` awaits the next `dev` PR. (Per user: one big `dev` PR
   at the end of the run.)
