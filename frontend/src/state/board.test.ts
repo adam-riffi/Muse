@@ -104,4 +104,20 @@ describe('useBoardStore', () => {
       useBoardStore.getState().removeCandidate('cand-1');
     }).not.toThrow();
   });
+
+  it('save posts the current board to the backend (msw)', async () => {
+    useBoardStore.getState().setEditor(
+      fakeEditor([
+        {
+          id: 's1',
+          type: 'image',
+          x: 0,
+          y: 0,
+          props: { w: 10, h: 10 },
+          meta: { candidateId: 'cand-1' },
+        },
+      ]),
+    );
+    await expect(useBoardStore.getState().save()).resolves.toBeUndefined();
+  });
 });
