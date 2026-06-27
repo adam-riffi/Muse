@@ -13,6 +13,7 @@
     "@muse/shared": "*",
     "react": "^19.2.7",
     "react-dom": "^19.2.7",
+    "tldraw": "^5.1.1",
     "zustand": "^5.0.14"
   },
   "devDependencies": {
