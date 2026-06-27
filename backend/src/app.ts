@@ -13,10 +13,14 @@ import { registerHealthRoute } from './routes/health.js';
 import { registerImageRoute } from './routes/image.js';
 import { registerImagesSearchRoute } from './routes/images-search.js';
 import { registerProposeRoute } from './routes/propose.js';
+import { registerSynthesizeRoute, type SynthesizeFn } from './routes/synthesize.js';
 import { fetchImage, type FetchedImage } from './services/image-fetch.js';
 import { createImageSource, type ImageSourceProvider } from './services/image-source.js';
 import { createSessionStore, type SessionStore } from './services/store.js';
+import { createSynthesizer } from './services/synthesize.js';
 import { createThumbnailStore, type ThumbnailStore } from './services/thumbnails.js';
+import { createVlmAnalyzer } from './services/vlm.js';
+import { createVlmProvider } from './services/vlm-providers.js';
 
 export type ServerDeps = {
   discover: (input: DiscoverImagesInput) => Promise<ImageCandidate[]>;
@@ -25,6 +29,7 @@ export type ServerDeps = {
   thumbnails: ThumbnailStore;
   fetchImage: (url: string) => Promise<FetchedImage>;
   imageSource: ImageSourceProvider | null;
+  synthesize: SynthesizeFn | null;
 };
 
 export type BuildServerOptions = {
@@ -40,6 +45,13 @@ export function buildServer({ config, deps }: BuildServerOptions): FastifyInstan
   const thumbnails = deps?.thumbnails ?? createThumbnailStore();
   const fetchImageImpl = deps?.fetchImage ?? ((url: string) => fetchImage(url));
   const imageSource = deps?.imageSource ?? createImageSource(config);
+  const vlmProvider = createVlmProvider(config);
+  const analyzer = vlmProvider !== null ? createVlmAnalyzer({ provider: vlmProvider }) : null;
+  const synthesize =
+    deps?.synthesize ??
+    (analyzer !== null
+      ? createSynthesizer({ store, fetchImage: fetchImageImpl, analyzer }).synthesize
+      : null);
 
   app.setNotFoundHandler((request, reply) => {
     void reply.code(404).send({
@@ -63,6 +75,7 @@ export function buildServer({ config, deps }: BuildServerOptions): FastifyInstan
   registerProposeRoute(app, { propose, store });
   registerImageRoute(app, { store, thumbnails, fetchImage: fetchImageImpl });
   registerImagesSearchRoute(app, { imageSource, store });
+  registerSynthesizeRoute(app, { synthesize });
   registerBoardRoute(app, { store });
 
   return app;

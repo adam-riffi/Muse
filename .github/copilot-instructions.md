@@ -123,15 +123,18 @@ Milestones: `v0.1.0` seam · `v0.2.0` refine→discover→curate · `v0.3.0` syn
 - **PR #19 `feat/palette-extraction`** — DONE, merged. `services/palette.ts`: `extractPalette(buffers)`
   aggregates node-vibrant swatches → role-tagged hexes (dominant/accent/neutral/background).
   Determinism boundary (pixels only); golden-fixture tests.
-- **PR #20 `feat/vlm-analysis`** — DONE (on branch, CI/merge pending). `services/vlm.ts` (analyzer)
-  + `services/vlm-providers.ts` (Anthropic default / OpenAI). One multi-image call → the non-palette
-  half of `MoodboardAnalysis` (`VlmAnalysisSchema = MoodboardAnalysisSchema.omit({palette})`).
-  Codex-style defensive parse (new `extractFirstJsonObject` + zod + one retry), cached by image-set
-  hash. Provider HTTP mocked in tests (no API/secrets in CI). Config: `VLM_PROVIDER`,
-  `ANTHROPIC_API_KEY`, `OPENAI_API_KEY`, `VLM_MODEL`. 191 tests.
-- **Next:** **PR #21 `feat/synthesize-endpoint`** — `POST /synthesize {imageIds}`: fetch kept images,
-  `extractPalette` (deterministic) + VLM analyze (mocked/keyed), merge into a full `MoodboardAnalysis`.
-  Then `feat/export-renderers` (pure tokens/brief/prompt/manifest) → **`v0.3.0`**, Epic 7 export → `v1.0.0`.
+- **PR #20 `feat/vlm-analysis`** — DONE, merged. `services/vlm.ts` (analyzer) +
+  `services/vlm-providers.ts` (Anthropic default / OpenAI). One multi-image call → non-palette half
+  of `MoodboardAnalysis`; defensive parse (`extractFirstJsonObject` + zod + retry), image-set cache.
+  Config: `VLM_PROVIDER`, `ANTHROPIC_API_KEY`, `OPENAI_API_KEY`, `VLM_MODEL`.
+- **PR #21 `feat/synthesize-endpoint`** — DONE (on branch, CI/merge pending). `services/synthesize.ts`
+  joins the two halves: resolve kept ids → fetch bytes → `extractPalette` (deterministic) + VLM
+  analyze → merged `MoodboardAnalysis`. `POST /synthesize {imageIds}`; 400 (unknown/empty) / 501 (no
+  VLM) / 502 (VLM parse fail). Synthesizer injectable in `buildServer`. 197 tests.
+- **Next:** **PR #22 `feat/export-renderers`** — pure functions rendering the bundle artifacts from a
+  `MoodboardAnalysis` + kept candidates: `design-tokens.json`, `design-brief.md`, `prompt.md`,
+  `manifest.json`. Snapshot tests; assert zero model calls (renderers stay pure). → **`v0.3.0`**.
+  Then Epic 7: `feat/export-bundle` (zip) → `feat/export-panel-ui` → `chore/e2e-and-release` → `v1.0.0`.
 - **`dev` integration:** `dev` has Epics 0–3 + Epic 4 canvas contracts (PRs #18, #20 merged).
   Whiteboard chunk (PR #14+) on `dev-copilot` awaits the next `dev` PR. (Per user: one big `dev` PR
   at the end of the run.)
