@@ -71,11 +71,14 @@ Milestones: `v0.1.0` seam · `v0.2.0` refine→discover→curate · `v0.3.0` syn
 
 ## Current state
 
-- **PR #1 `chore/repo-foundation`** (this PR): npm-workspace root, TypeScript 6 base config,
-  ESLint 10 flat config + Prettier, Vitest 4 + smoke test, CI workflow, Changesets, project docs,
-  and this context doc. Full local gate is green.
-- **Next:** open PR `chore/repo-foundation → dev-copilot`, merge on green CI, then **PR #2
-  `feat/shared-contracts`** (zod contracts in `@muse/shared`).
+- **PR #1 `chore/repo-foundation`** — DONE, merged into `dev-copilot` (`0ed4244`). Monorepo root,
+  TS 6 base config, ESLint 10 + Prettier, Vitest 4, CI workflow, Changesets, project docs, this doc.
+- **PR #2 `feat/shared-contracts`** — DONE (on branch, CI/merge pending). `@muse/shared` workspace
+  (zod 4): `imageId` sha256 util (subpath `@muse/shared/hash`), `ImageCandidate`, `MoodboardAnalysis`
+  (+ palette/typography/spacing sub-schemas), and export bundle schemas (`Manifest`, `DesignTokens`).
+  24 tests; full gate green.
+- **Next:** **PR #3 `feat/backend-skeleton`** — Fastify `buildServer()` factory, `config.ts` (env via
+  zod), `GET /health`, error/not-found handlers; consumes `@muse/shared`.
 - Before **PR #4** (codex adapter): run `codex --help` and pin the exact non-interactive invocation
   in `docs/CODEX.md`.
 
@@ -99,6 +102,11 @@ scopes repo+workflow). Git identity: `Adam Riffi <211388619+adam-riffi@users.nor
   no secrets in CI.
 - **2026-06-27** — Changesets toolchain has 13 moderate **dev-only** transitive audit notices; not
   fixable without a breaking bump, so deferred.
+- **2026-06-27** — `@muse/shared` uses **zod 4** (`z.url()`, `z.iso.datetime()`). Schemas are the
+  single source of truth; TS types are `z.infer`. The `imageId` (node:crypto sha256) util lives
+  behind the `@muse/shared/hash` subpath so browser consumers never bundle Node built-ins. Each
+  workspace uses split tsconfigs: `tsconfig.json` (typecheck, includes tests) + `tsconfig.build.json`
+  (emit src-only to `dist` with declarations).
 
 ## Commands
 
