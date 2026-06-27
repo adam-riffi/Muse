@@ -9,15 +9,17 @@
     "node": ">=26"
   },
   "workspaces": [
-    "shared"
+    "shared",
+    "backend"
   ],
   "scripts": {
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "typecheck": "tsc --noEmit -p tsconfig.json && npm run typecheck --workspaces --if-present",
-    "test": "vitest run",
+    "build:shared": "npm run build -w @muse/shared",
+    "typecheck": "npm run build:shared && tsc --noEmit -p tsconfig.json && npm run typecheck --workspaces --if-present",
+    "test": "npm run build:shared && vitest run",
     "test:watch": "vitest",
     "build": "npm run build --workspaces --if-present"
   },
