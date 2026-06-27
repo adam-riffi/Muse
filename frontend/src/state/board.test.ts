@@ -1,20 +1,32 @@
-import { beforeEach, describe, expect, it } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+import type { ImageCandidate } from '@muse/shared';
 import type { TldrawShapeLike } from '../board/adapter';
-import { type BoardEditor, useBoardStore } from './board';
+import { useBoardStore } from './board';
 
 beforeEach(() => {
   useBoardStore.getState().setEditor(null);
 });
 
-const fakeEditor = (shapes: TldrawShapeLike[]): BoardEditor => ({
-  getCurrentPageShapes: () => shapes,
-  getCamera: () => ({ x: 0, y: 0, z: 1 }),
-});
+function fakeEditor(shapes: TldrawShapeLike[] = []) {
+  return {
+    getCurrentPageShapes: () => shapes,
+    getCamera: () => ({ x: 0, y: 0, z: 1 }),
+    createAssets: vi.fn(),
+    createShape: vi.fn(),
+    deleteShapes: vi.fn(),
+  };
+}
+
+const candidate: ImageCandidate = {
+  id: 'cand-1',
+  source: 'codex:websearch',
+  url: 'https://x.com/a.jpg',
+  rationale: 'fits',
+};
 
 describe('useBoardStore', () => {
   it('returns an empty board when no editor is mounted', () => {
-    const board = useBoardStore.getState().getBoardState();
-    expect(board.elements).toEqual([]);
+    expect(useBoardStore.getState().getBoardState().elements).toEqual([]);
     expect(useBoardStore.getState().getKeptCandidateIds()).toEqual([]);
   });
 
@@ -33,8 +45,12 @@ describe('useBoardStore', () => {
         { id: 's3', type: 'arrow', x: 0, y: 0 },
       ]),
     );
-    const board = useBoardStore.getState().getBoardState();
-    expect(board.elements.map((element) => element.type)).toEqual(['image', 'rect']);
+    expect(
+      useBoardStore
+        .getState()
+        .getBoardState()
+        .elements.map((e) => e.type),
+    ).toEqual(['image', 'rect']);
   });
 
   it('derives the kept candidate ids from image elements', () => {
@@ -59,5 +75,33 @@ describe('useBoardStore', () => {
       ]),
     );
     expect(useBoardStore.getState().getKeptCandidateIds()).toEqual(['cand-1', 'cand-2']);
+  });
+
+  it('addCandidate creates an asset and an image shape carrying the candidateId', () => {
+    const editor = fakeEditor();
+    useBoardStore.getState().setEditor(editor);
+    useBoardStore.getState().addCandidate(candidate);
+    expect(editor.createAssets).toHaveBeenCalledOnce();
+    expect(editor.createShape).toHaveBeenCalledOnce();
+    expect(editor.createShape.mock.calls[0]?.[0]).toMatchObject({
+      meta: { candidateId: 'cand-1' },
+    });
+  });
+
+  it('removeCandidate deletes the shapes for that candidate', () => {
+    const editor = fakeEditor([
+      { id: 's1', type: 'image', x: 0, y: 0, meta: { candidateId: 'cand-1' } },
+      { id: 's2', type: 'image', x: 0, y: 0, meta: { candidateId: 'cand-2' } },
+    ]);
+    useBoardStore.getState().setEditor(editor);
+    useBoardStore.getState().removeCandidate('cand-1');
+    expect(editor.deleteShapes).toHaveBeenCalledWith(['s1']);
+  });
+
+  it('does nothing when no editor is mounted', () => {
+    expect(() => {
+      useBoardStore.getState().addCandidate(candidate);
+      useBoardStore.getState().removeCandidate('cand-1');
+    }).not.toThrow();
   });
 });

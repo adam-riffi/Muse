@@ -38,6 +38,9 @@ describe('App', () => {
     // Search now → discovery candidates render
     await user.click(screen.getByRole('button', { name: /search now/i }));
     expect(await screen.findByText('fits the brief')).toBeInTheDocument();
+
+    // The candidate appears in the tray with an "add to board" action
+    expect(screen.getByRole('button', { name: /to board/i })).toBeInTheDocument();
   });
 
   it('shows an error when propositions fail', async () => {

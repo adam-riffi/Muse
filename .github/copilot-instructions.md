@@ -103,16 +103,17 @@ Milestones: `v0.1.0` seam · `v0.2.0` refine→discover→curate · `v0.3.0` syn
   orchestrates brief → propose → pick (refine) → Search now → discover. **Epic 3 done.**
 - **PR #13 `feat/canvas-contracts`** — DONE, merged. `@muse/shared`: `CanvasElementSchema` union,
   `BoardState`, `keptCandidateIds(board)` (curation gate).
-- **PR #14 `feat/canvas-integration`** — DONE (on branch, CI/merge pending). Frontend: `board/adapter.ts`
-  (`mapTldrawShape` → CanvasElement, pure + tested), `state/board.ts` (zustand holds the tldraw editor
-  behind a `BoardEditor` slice, derives `BoardState`/kept-set), `Whiteboard.tsx` (mounts **tldraw**:
-  grid, pan/zoom, toolbar, persistenceKey), shown in App. tldraw is mocked in tests (needs a browser);
-  build bundles it (>500 kB warning — lazy-load is a follow-up). 145 tests.
-- **Next:** **PR #15 `feat/candidate-tray-dragdrop`** (frontend) — a candidate tray (discovered +
-  proposition picks) beside the canvas; drag/drop an image onto the board = keep (create a tldraw image
-  shape with `meta.candidateId`); remove = unkeep; position/scale persisted in `BoardState`.
-- **`dev` integration:** `dev` has Epics 0–3 (PR #18 merged). **GitHub PR #20 OPEN** (`dev ← Epic 4 (1)
-  canvas contracts`, CI green). Next Epic 4 dev PR after the whiteboard chunk.
+- **PR #14 `feat/canvas-integration`** — DONE, merged (+ `fix/tldraw-dependency` PR #22). tldraw
+  Whiteboard mounted (board adapter + store, grid, persistence). tldraw mocked in tests.
+- **PR #15 `feat/candidate-tray-dragdrop`** — DONE (on branch, CI/merge pending). `board/place.ts`
+  (pure asset/shape builders), board store `addCandidate`/`removeCandidate`, `CandidateTray` beside
+  the canvas (Add to board → kept tldraw image shape with `meta.candidateId`). 151 tests.
+- **Next:** **PR #16 `feat/annotations-shapes`** — tldraw already provides shapes/arrows/draw/text via
+  its toolbar; extend `mapTldrawShape` to also map arrow/freedraw/text into `BoardState` so annotations
+  are captured (not just in the PNG). Then PR #17 board persistence (`POST/GET /board`).
+- **`dev` integration:** `dev` has Epics 0–3 + Epic 4 canvas contracts (PRs #18, #20 merged).
+  Whiteboard chunk (PR #14+) on `dev-copilot` awaits the next `dev` PR. (Per user: one big `dev` PR
+  at the end of the run.)
 
 ## Environment (verified)
 
