@@ -1,5 +1,6 @@
 import { BriefForm } from './components/BriefForm';
 import { CandidateGrid } from './components/CandidateGrid';
+import { CandidateTray } from './components/CandidateTray';
 import { PropositionGrid } from './components/PropositionGrid';
 import { RefinementBreadcrumb } from './components/RefinementBreadcrumb';
 import { Whiteboard } from './components/Whiteboard';
@@ -79,9 +80,14 @@ export function App() {
         <section aria-label="Whiteboard" className="space-y-3">
           <h2 className="text-lg font-medium">Whiteboard</h2>
           <p className="text-sm text-zinc-500">
-            Drag references onto the board and annotate to shape your direction.
+            Add references to the board and annotate to shape your direction.
           </p>
-          <Whiteboard />
+          <div className="flex gap-4">
+            <CandidateTray />
+            <div className="min-w-0 flex-1">
+              <Whiteboard />
+            </div>
+          </div>
         </section>
       </div>
     </main>
