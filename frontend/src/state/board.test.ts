@@ -42,7 +42,7 @@ describe('useBoardStore', () => {
           meta: { candidateId: 'cand-1' },
         },
         { id: 's2', type: 'geo', x: 0, y: 0, props: { geo: 'rectangle', w: 5, h: 5 } },
-        { id: 's3', type: 'arrow', x: 0, y: 0 },
+        { id: 's3', type: 'note', x: 0, y: 0 },
       ]),
     );
     expect(
