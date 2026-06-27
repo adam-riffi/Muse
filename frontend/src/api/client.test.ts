@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { discover, propose, thumbnailUrl } from './client';
+import { discover, propose, searchImages, thumbnailUrl } from './client';
 
 describe('api client', () => {
   it('discover() returns parsed candidates from the backend', async () => {
@@ -16,5 +16,11 @@ describe('api client', () => {
 
   it('thumbnailUrl() builds the thumbnail endpoint path', () => {
     expect(thumbnailUrl('abc')).toBe('/api/image/abc/thumbnail');
+  });
+
+  it('searchImages() returns candidates from the image source', async () => {
+    const candidates = await searchImages('anime', 5);
+    expect(candidates).toHaveLength(1);
+    expect(candidates[0]).toMatchObject({ url: 'https://x.com/a.jpg' });
   });
 });

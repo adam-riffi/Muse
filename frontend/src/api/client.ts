@@ -50,6 +50,22 @@ export function thumbnailUrl(id: string): string {
   return `${API_BASE}/image/${id}/thumbnail`;
 }
 
+export async function searchImages(
+  query: string,
+  count?: number,
+  signal?: AbortSignal,
+): Promise<ImageCandidate[]> {
+  const params = new URLSearchParams({ q: query });
+  if (count !== undefined) {
+    params.set('n', String(count));
+  }
+  const response = await fetch(`${API_BASE}/images/search?${params.toString()}`, { signal });
+  if (!response.ok) {
+    throw new Error(`Image search failed with status ${response.status}`);
+  }
+  return (await response.json()) as ImageCandidate[];
+}
+
 export async function loadBoard(): Promise<BoardState> {
   const response = await fetch(`${API_BASE}/board`);
   if (!response.ok) {
