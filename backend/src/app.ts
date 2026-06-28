@@ -4,12 +4,14 @@ import Fastify, {
   type FastifyServerOptions,
 } from 'fastify';
 import type { ImageCandidate, PropositionRound } from '@muse/shared';
+import { normalizerFor } from './adapters/agent-stream.js';
 import { resolveAgentRunner } from './adapters/agent-runner.js';
 import { discoverImages, type DiscoverImagesInput } from './adapters/codex.js';
 import { createPropositionEngine, type ProposeStylesInput } from './adapters/proposition.js';
 import type { AppConfig } from './config.js';
 import { registerBoardRoute } from './routes/board.js';
 import { registerDiscoverRoute } from './routes/discover.js';
+import { registerDiscoverStreamRoute, type RunDiscoveryStream } from './routes/discover-stream.js';
 import { registerExportRoute } from './routes/export.js';
 import { registerHealthRoute } from './routes/health.js';
 import { registerImageRoute } from './routes/image.js';
@@ -36,6 +38,7 @@ export type ServerDeps = {
   synthesize: SynthesizeFn | null;
   exporter: Exporter;
   detectCli: () => Promise<CliStatus>;
+  runDiscoveryStream: RunDiscoveryStream;
 };
 
 export type BuildServerOptions = {
@@ -50,6 +53,23 @@ export function buildServer({ config, deps }: BuildServerOptions): FastifyInstan
   const discover =
     deps?.discover ?? ((input: DiscoverImagesInput) => discoverImages(input, { runner }));
   const propose = deps?.propose ?? createPropositionEngine({ runner }).propose;
+  const normalize = normalizerFor(config.agentCli);
+  const runDiscoveryStream =
+    deps?.runDiscoveryStream ??
+    ((input: DiscoverImagesInput, onEvent) =>
+      discoverImages(input, {
+        runner,
+        onStdoutLine: (line) => {
+          try {
+            const event = normalize(JSON.parse(line));
+            if (event !== null) {
+              onEvent(event);
+            }
+          } catch {
+            // ignore non-JSON / partial lines
+          }
+        },
+      }));
   const thumbnails = deps?.thumbnails ?? createThumbnailStore();
   const fetchImageImpl = deps?.fetchImage ?? ((url: string) => fetchImage(url));
   const imageSource = deps?.imageSource ?? createImageSource(config);
@@ -82,6 +102,7 @@ export function buildServer({ config, deps }: BuildServerOptions): FastifyInstan
 
   registerHealthRoute(app, { detect: detectCli });
   registerDiscoverRoute(app, { discover, store });
+  registerDiscoverStreamRoute(app, { runDiscovery: runDiscoveryStream, store });
   registerProposeRoute(app, { propose, store });
   registerImageRoute(app, { store, thumbnails, fetchImage: fetchImageImpl });
   registerImagesSearchRoute(app, { imageSource, store });

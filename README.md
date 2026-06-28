@@ -88,6 +88,7 @@ HTTP API:
 | `GET /health` | liveness + detected agent CLI (`{ agent: { provider, bin, available, version } }`) |
 | `POST /propose` | style propositions (`{ brief, refinements?, n? }` → `PropositionRound`) |
 | `POST /discover` | discovery (`{ brief, count?, refinements? }` → `ImageCandidate[]`) |
+| `GET /discover/stream` | same discovery as **SSE** — live `activity` events (reasoning / web searches) then a `result` event |
 | `GET /image/:id/thumbnail` | cached thumbnail for a candidate |
 | `GET /images/search` | optional image-source search (`?q=&n=`, Openverse/Unsplash) |
 | `GET` / `POST /board` | load / save the whiteboard `BoardState` |

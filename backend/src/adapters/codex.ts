@@ -21,6 +21,8 @@ export type DiscoverImagesInput = DiscoveryPromptInput & {
 
 export type DiscoverImagesDeps = {
   runner?: CodexRunner;
+  /** Optional: forwards each raw stdout line from the agent CLI (for streaming progress). */
+  onStdoutLine?: (line: string) => void;
 };
 
 export class CodexDiscoveryError extends Error {
@@ -64,7 +66,12 @@ export async function discoverImages(
   deps: DiscoverImagesDeps = {},
 ): Promise<ImageCandidate[]> {
   const runner = deps.runner ?? runCodexExec;
-  const runOptions = { model: input.model, cwd: input.cwd, timeoutMs: input.timeoutMs };
+  const runOptions = {
+    model: input.model,
+    cwd: input.cwd,
+    timeoutMs: input.timeoutMs,
+    onStdoutLine: deps.onStdoutLine,
+  };
   const basePrompt = buildDiscoveryPrompt(input);
 
   const first = await runner({ prompt: basePrompt, ...runOptions });
