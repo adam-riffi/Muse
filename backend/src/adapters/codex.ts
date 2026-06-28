@@ -10,8 +10,8 @@ import {
   extractLastAgentMessage,
   runCodexExec,
 } from './codex-runner.js';
-import { normalizeDiscoveryItems } from './normalize.js';
-import { extractFirstJsonArray, stripAnsi } from './parse.js';
+import { normalizeDiscoveryArray } from './normalize.js';
+import { extractAllJsonArrays, stripAnsi } from './parse.js';
 
 export type DiscoverImagesInput = DiscoveryPromptInput & {
   model?: string;
@@ -43,20 +43,35 @@ function resolveMessage(result: CodexRunResult): string | null {
   return extractLastAgentMessage(result.stdout);
 }
 
+// Defensive parse: agents often wrap the array in a prose preamble and/or a ```json fence, which can
+// contain stray brackets (markdown links, citations, example arrays). So we try EVERY balanced array
+// in the message and return the first that yields ≥1 valid candidate. Returns null only when no
+// array parses at all (a genuine failure worth a retry); an empty array means "parsed, no results".
 function tryParse(result: CodexRunResult): ImageCandidate[] | null {
   const message = resolveMessage(result);
   if (message === null) {
     return null;
   }
-  const arrayText = extractFirstJsonArray(stripAnsi(message));
-  if (arrayText === null) {
-    return null;
+
+  let sawArray = false;
+  for (const arrayText of extractAllJsonArrays(stripAnsi(message))) {
+    let parsed: unknown;
+    try {
+      parsed = JSON.parse(arrayText);
+    } catch {
+      continue;
+    }
+    if (!Array.isArray(parsed)) {
+      continue;
+    }
+    sawArray = true;
+    const items = normalizeDiscoveryArray(parsed);
+    if (items.length > 0) {
+      return items;
+    }
   }
-  try {
-    return normalizeDiscoveryItems(arrayText);
-  } catch {
-    return null;
-  }
+
+  return sawArray ? [] : null;
 }
 
 // The one public entry point of the seam. Everything Codex-specific is reached only through here;

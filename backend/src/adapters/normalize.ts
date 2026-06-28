@@ -11,20 +11,16 @@ export const RawDiscoveryItemSchema = z.object({
 });
 export type RawDiscoveryItem = z.infer<typeof RawDiscoveryItemSchema>;
 
-// Parse extracted JSON text into normalized ImageCandidate[]. Individually invalid items are
-// dropped (resilient to a single bad entry); a non-array or unparseable payload throws so the
-// orchestration can retry once and then fail gracefully.
-export function normalizeDiscoveryItems(jsonText: string): ImageCandidate[] {
-  const parsed: unknown = JSON.parse(jsonText);
-  if (!Array.isArray(parsed)) {
-    throw new Error('Discovery output is not a JSON array');
-  }
-
+// Normalize an already-parsed array of raw items into ImageCandidate[]. Accepts both object items
+// (`{ url, ... }`) and bare URL strings. Individually invalid items are dropped (resilient to a
+// single bad entry), and duplicates (by image id) are removed.
+export function normalizeDiscoveryArray(items: readonly unknown[]): ImageCandidate[] {
   const seen = new Set<string>();
   const candidates: ImageCandidate[] = [];
 
-  for (const raw of parsed) {
-    const result = RawDiscoveryItemSchema.safeParse(raw);
+  for (const raw of items) {
+    const coerced = typeof raw === 'string' ? { url: raw } : raw;
+    const result = RawDiscoveryItemSchema.safeParse(coerced);
     if (!result.success) {
       continue;
     }
@@ -49,4 +45,14 @@ export function normalizeDiscoveryItems(jsonText: string): ImageCandidate[] {
   }
 
   return candidates;
+}
+
+// Parse extracted JSON text into normalized ImageCandidate[]. A non-array or unparseable payload
+// throws so the orchestration can try the next candidate / retry.
+export function normalizeDiscoveryItems(jsonText: string): ImageCandidate[] {
+  const parsed: unknown = JSON.parse(jsonText);
+  if (!Array.isArray(parsed)) {
+    throw new Error('Discovery output is not a JSON array');
+  }
+  return normalizeDiscoveryArray(parsed);
 }
