@@ -1,4 +1,5 @@
 import { useCandidateStore } from '../state/candidates';
+import { CandidateImage } from './CandidateImage';
 
 export function CandidateGrid() {
   const candidates = useCandidateStore((state) => state.candidates);
@@ -14,12 +15,7 @@ export function CandidateGrid() {
           key={candidate.id}
           className="overflow-hidden rounded-lg border border-zinc-800 bg-zinc-900"
         >
-          <img
-            src={candidate.url}
-            alt={candidate.title ?? candidate.rationale}
-            loading="lazy"
-            className="aspect-square w-full object-cover"
-          />
+          <CandidateImage candidate={candidate} className="aspect-square w-full object-cover" />
           <p className="p-2 text-xs text-zinc-400">{candidate.rationale}</p>
         </li>
       ))}
