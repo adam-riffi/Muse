@@ -7,6 +7,7 @@ import {
   type CodexRunInput,
   type CodexRunResult,
   type CodexRunner,
+  createLineEmitter,
   runCodexExec,
 } from './codex-runner.js';
 
@@ -87,6 +88,7 @@ export const runCopilotExec: AgentRunner = async (input) => {
       let stdout = '';
       let stderr = '';
       let timedOut = false;
+      const lines = input.onStdoutLine ? createLineEmitter(input.onStdoutLine) : null;
 
       const timer = setTimeout(() => {
         timedOut = true;
@@ -94,7 +96,9 @@ export const runCopilotExec: AgentRunner = async (input) => {
       }, timeoutMs);
 
       child.stdout?.on('data', (chunk: Buffer) => {
-        stdout += chunk.toString();
+        const text = chunk.toString();
+        stdout += text;
+        lines?.push(text);
       });
       child.stderr?.on('data', (chunk: Buffer) => {
         stderr += chunk.toString();
@@ -107,6 +111,7 @@ export const runCopilotExec: AgentRunner = async (input) => {
 
       child.on('close', (code) => {
         clearTimeout(timer);
+        lines?.flush();
         resolve({
           exitCode: code,
           stdout,

@@ -8,6 +8,8 @@ export type CodexRunInput = {
   model?: string;
   cwd?: string;
   timeoutMs?: number;
+  /** Optional: called with each complete stdout line as it arrives (for streaming progress). */
+  onStdoutLine?: (line: string) => void;
 };
 
 export type CodexRunResult = {
@@ -80,6 +82,32 @@ export function extractLastAgentMessage(stdout: string): string | null {
   return last;
 }
 
+// Splits a stream of chunks into complete lines, invoking `onLine` for each. Used to forward JSONL
+// progress events as they arrive. `flush` emits any trailing partial line at close.
+export function createLineEmitter(onLine: (line: string) => void): {
+  push: (text: string) => void;
+  flush: () => void;
+} {
+  let buffer = '';
+  return {
+    push(text) {
+      buffer += text;
+      let index = buffer.indexOf('\n');
+      while (index >= 0) {
+        onLine(buffer.slice(0, index));
+        buffer = buffer.slice(index + 1);
+        index = buffer.indexOf('\n');
+      }
+    },
+    flush() {
+      if (buffer.trim() !== '') {
+        onLine(buffer);
+      }
+      buffer = '';
+    },
+  };
+}
+
 export const runCodexExec: CodexRunner = async (input) => {
   const bin = process.env.CODEX_BIN ?? 'codex';
   const timeoutMs = (input.timeoutMs ?? Number(process.env.CODEX_TIMEOUT_MS)) || DEFAULT_TIMEOUT_MS;
@@ -93,6 +121,7 @@ export const runCodexExec: CodexRunner = async (input) => {
       let stdout = '';
       let stderr = '';
       let timedOut = false;
+      const lines = input.onStdoutLine ? createLineEmitter(input.onStdoutLine) : null;
 
       const timer = setTimeout(() => {
         timedOut = true;
@@ -100,7 +129,9 @@ export const runCodexExec: CodexRunner = async (input) => {
       }, timeoutMs);
 
       child.stdout?.on('data', (chunk: Buffer) => {
-        stdout += chunk.toString();
+        const text = chunk.toString();
+        stdout += text;
+        lines?.push(text);
       });
       child.stderr?.on('data', (chunk: Buffer) => {
         stderr += chunk.toString();
@@ -113,6 +144,7 @@ export const runCodexExec: CodexRunner = async (input) => {
 
       child.on('close', (code) => {
         clearTimeout(timer);
+        lines?.flush();
         void readFileSafe(lastMessagePath).then((lastMessage) => {
           resolve({ exitCode: code, stdout, stderr, lastMessage, timedOut });
         });
