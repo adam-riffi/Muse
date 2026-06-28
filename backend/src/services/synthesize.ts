@@ -36,9 +36,18 @@ export function createSynthesizer(deps: SynthesizerDeps): Synthesizer {
       const buffers: Buffer[] = [];
       const images: VlmImage[] = [];
       for (const candidate of candidates) {
-        const fetched = await deps.fetchImage(candidate.url);
-        buffers.push(fetched.buffer);
-        images.push({ mediaType: fetched.contentType, data: fetched.buffer.toString('base64') });
+        try {
+          const fetched = await deps.fetchImage(candidate.url);
+          buffers.push(fetched.buffer);
+          images.push({ mediaType: fetched.contentType, data: fetched.buffer.toString('base64') });
+        } catch {
+          // skip kept images that can't be fetched (dead/blocked links)
+        }
+      }
+      if (images.length === 0) {
+        throw new SynthesizeError(
+          'Could not load any of the kept images (the links may be dead or blocked). Keep different references and try again.',
+        );
       }
 
       const palette = await extractPalette(buffers);
