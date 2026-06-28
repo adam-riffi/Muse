@@ -85,4 +85,12 @@ describe('createPropositionEngine', () => {
     await engine.propose({ brief: 'anime', refinements: ['retro'] });
     expect(calls).toHaveLength(2);
   });
+
+  it('recovers variants from a prose preamble with stray brackets', async () => {
+    const message = `Here are some directions [see refs]:\n\n\`\`\`json\n${cleanVariants}\n\`\`\``;
+    const { runner, calls } = fakeRunner([{ lastMessage: message }]);
+    const round = await createPropositionEngine({ runner }).propose({ brief: 'anime' });
+    expect(round.options).toHaveLength(2);
+    expect(calls).toHaveLength(1);
+  });
 });
