@@ -1,0 +1,31 @@
+name: Codex Contract
+
+# Manual, opt-in contract check against the REAL Codex CLI. Muse needs a persistent host with the
+# `codex` binary installed and authenticated, which the GitHub-hosted runners do not provide — so
+# this never runs automatically. Point a self-hosted runner at the repo and dispatch it when you
+# want to catch Codex version drift (the rest of CI stays hermetic with recorded fixtures).
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  contract:
+    name: live codex smoke
+    runs-on: [self-hosted]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run a live discovery against Codex
+        run: npm run verify:codex
