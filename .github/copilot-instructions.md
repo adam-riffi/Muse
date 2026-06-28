@@ -166,6 +166,11 @@ scopes repo+workflow). Git identity: `Adam Riffi <211388619+adam-riffi@users.nor
 
 ## Decision log
 
+- **2026-06-28** — Synthesis can use the **Copilot CLI for vision** (`VLM_PROVIDER=copilot`, no API
+  key): `createCopilotVlmProvider` normalizes kept images to PNGs and attaches them via `copilot -p …
+  --attachment`, parsed by the existing VLM analyzer. Keeps the "use local agent CLIs" philosophy;
+  `anthropic`/`openai` (keyed) remain options. `/synthesize` returns 501 only when no provider resolves.
+
 - **2026-06-28** — "Failed to parse … after one retry" was usually a **timeout**, not a parse error:
   Codex over-searches (20+ web searches for 12 images) and was SIGKILLed at 120s with no final message.
   Fix: default count 12 → 8, prompt asks the agent to search efficiently/stop early, runner timeout
