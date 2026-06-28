@@ -36,6 +36,24 @@ describe('fetchImage', () => {
     ).rejects.toBeInstanceOf(ImageFetchError);
   });
 
+  it('accepts a generic octet-stream content-type (decoder validates the bytes)', async () => {
+    const result = await fetchImage('https://x.com/a', {
+      fetchImpl: () => Promise.resolve(imageResponse(png, 'application/octet-stream')),
+    });
+    expect(result.buffer).toBeInstanceOf(Buffer);
+  });
+
+  it('sends a browser-like User-Agent', async () => {
+    let sentHeaders: Record<string, string> | undefined;
+    await fetchImage('https://x.com/a.png', {
+      fetchImpl: (_url, init) => {
+        sentHeaders = init?.headers as Record<string, string>;
+        return Promise.resolve(imageResponse(png));
+      },
+    });
+    expect(sentHeaders?.['user-agent']).toContain('Mozilla/5.0');
+  });
+
   it('rejects a non-ok response', async () => {
     await expect(
       fetchImage('https://x.com/missing.png', {
