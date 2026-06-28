@@ -62,4 +62,41 @@ describe('createSynthesizer', () => {
     });
     await expect(synthesizer.synthesize(['missing'])).rejects.toBeInstanceOf(SynthesizeError);
   });
+
+  it('skips kept images that fail to fetch and synthesizes from the rest', async () => {
+    const store = storeWith([
+      candidate('a', 'https://x.com/dead.jpg'),
+      candidate('b', 'https://x.com/ok.jpg'),
+    ]);
+    const fetchImage = vi.fn(async (url: string) => {
+      if (url.includes('dead')) {
+        throw new Error('Image fetch failed with status 410');
+      }
+      return { buffer: Buffer.from('ok'), contentType: 'image/png', bytes: 2 };
+    });
+    const analyze = vi.fn(analyzer.analyze);
+    const synthesizer = createSynthesizer({
+      store,
+      fetchImage,
+      analyzer: { analyze },
+      extractPalette: async () => [{ hex: '#112233', role: 'dominant' }],
+    });
+
+    const analysis = await synthesizer.synthesize(['a', 'b']);
+    expect(analysis.summary).toBe('A warm classical board.');
+    expect(analyze.mock.calls[0]?.[0].images).toHaveLength(1); // only the working image
+  });
+
+  it('throws when none of the kept images can be fetched', async () => {
+    const store = storeWith([candidate('a', 'https://x.com/dead.jpg')]);
+    const synthesizer = createSynthesizer({
+      store,
+      fetchImage: async () => {
+        throw new Error('Image fetch failed with status 410');
+      },
+      analyzer,
+      extractPalette: async () => [],
+    });
+    await expect(synthesizer.synthesize(['a'])).rejects.toBeInstanceOf(SynthesizeError);
+  });
 });

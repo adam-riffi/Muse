@@ -166,6 +166,11 @@ scopes repo+workflow). Git identity: `Adam Riffi <211388619+adam-riffi@users.nor
 
 ## Decision log
 
+- **2026-06-28** — Synthesis is format/link resilient: every kept image is normalized to **PNG via
+  sharp before node-vibrant** (Jimp can't decode WebP/AVIF → was a 500), undecodable images are
+  skipped, and the synthesizer **skips kept images that fail to fetch** (dead/blocked links),
+  throwing 400 only when none load. Fixed "Synthesis failed with status 500".
+
 - **2026-06-28** — Synthesis can use the **Copilot CLI for vision** (`VLM_PROVIDER=copilot`, no API
   key): `createCopilotVlmProvider` normalizes kept images to PNGs and attaches them via `copilot -p …
   --attachment`, parsed by the existing VLM analyzer. Keeps the "use local agent CLIs" philosophy;

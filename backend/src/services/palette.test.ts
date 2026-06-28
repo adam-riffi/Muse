@@ -61,4 +61,18 @@ describe('extractPalette', () => {
     expect(b).toBeGreaterThan(r);
     expect(b).toBeGreaterThan(g);
   });
+
+  it('handles WebP images (node-vibrant cannot decode WebP directly)', async () => {
+    const webp = await sharp({
+      create: { width: 64, height: 64, channels: 3, background: { r: 30, g: 160, b: 90 } },
+    })
+      .webp()
+      .toBuffer();
+    const palette = await extractPalette([webp]);
+    expect(palette.length).toBeGreaterThan(0);
+  });
+
+  it('skips an undecodable buffer instead of throwing', async () => {
+    expect(await extractPalette([Buffer.from('not an image')])).toEqual([]);
+  });
 });
