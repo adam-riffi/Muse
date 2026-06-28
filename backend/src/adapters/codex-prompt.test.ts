@@ -17,7 +17,7 @@ describe('buildDiscoveryPrompt', () => {
   });
 
   it('uses the default count and respects an override', () => {
-    expect(buildDiscoveryPrompt({ brief: 'x' })).toContain('find 12 ');
+    expect(buildDiscoveryPrompt({ brief: 'x' })).toContain('find 8 ');
     expect(buildDiscoveryPrompt({ brief: 'x', count: 5 })).toContain('find 5 ');
   });
 
