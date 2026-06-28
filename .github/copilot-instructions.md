@@ -166,6 +166,12 @@ scopes repo+workflow). Git identity: `Adam Riffi <211388619+adam-riffi@users.nor
 
 ## Decision log
 
+- **2026-06-28** — Agent output parsing is **multi-array tolerant**: `extractAllJsonArrays` returns
+  every balanced `[...]`, and discovery/proposition parsers pick the first that yields valid items
+  (handles prose preambles, markdown-link brackets, ```json fences, `{"results":[…]}` wrappers, and
+  bare-URL-string arrays). Fixes "Failed to parse … after one retry". `normalizeDiscoveryArray`
+  accepts both `{url,…}` objects and bare URL strings.
+
 - **2026-06-28** — Discovery streams progress over **SSE** (`GET /discover/stream`): each agent CLI's
   JSONL is normalized to an `AgentStreamEvent` union (`@muse/shared`) and relayed live so the UI shows
   reasoning + web searches. Runners gained line-buffered `onStdoutLine`; the frontend uses EventSource
