@@ -23,11 +23,13 @@ Set in `backend/.env` (never commit secrets):
 | `CODEX_BIN` / `COPILOT_BIN` | `codex` / `copilot` | override the CLI binary path/name |
 | `IMAGE_SOURCE` | `openverse` | `none` \| `openverse` (keyless) \| `unsplash` |
 | `UNSPLASH_ACCESS_KEY` | — | required when `IMAGE_SOURCE=unsplash` |
-| `VLM_PROVIDER` | `anthropic` | `none` \| `anthropic` \| `openai` |
-| `ANTHROPIC_API_KEY` / `OPENAI_API_KEY` | — | required for synthesis (`/synthesize`, `/export`) |
+| `VLM_PROVIDER` | `anthropic` | `none` \| `copilot` (local CLI, **no key**) \| `anthropic` \| `openai` |
+| `ANTHROPIC_API_KEY` / `OPENAI_API_KEY` | — | required for synthesis when using `anthropic`/`openai` |
 | `VLM_MODEL` | provider default | override the model |
 
-With `VLM_PROVIDER=none` (or no key), `/synthesize` returns **501** — discovery and curation still work.
+With `VLM_PROVIDER=none` (or `anthropic`/`openai` without a key), `/synthesize` returns **501** —
+discovery and curation still work. **`VLM_PROVIDER=copilot` needs no key**: it drives the
+authenticated GitHub Copilot CLI for vision (writes the kept images to temp files and attaches them).
 
 ### Agent CLI detection
 
