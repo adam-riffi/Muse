@@ -1,5 +1,10 @@
 import { describe, expect, it } from 'vitest';
-import { extractFirstJsonArray, extractFirstJsonObject, stripAnsi } from './parse.js';
+import {
+  extractAllJsonArrays,
+  extractFirstJsonArray,
+  extractFirstJsonObject,
+  stripAnsi,
+} from './parse.js';
 
 describe('stripAnsi', () => {
   it('removes SGR color codes', () => {
@@ -45,6 +50,29 @@ describe('extractFirstJsonArray', () => {
 
   it('returns null for an unbalanced array', () => {
     expect(extractFirstJsonArray('[{"a":1}')).toBeNull();
+  });
+});
+
+describe('extractAllJsonArrays', () => {
+  it('returns every balanced array in order', () => {
+    expect(extractAllJsonArrays('first [1,2] then [3,4]')).toEqual(['[1,2]', '[3,4]']);
+  });
+
+  it('skips a markdown-link bracket and finds the real array after it', () => {
+    const input = 'See [Unsplash](https://unsplash.com) then: [{"url":"https://a.com/1.jpg"}]';
+    expect(extractAllJsonArrays(input)).toEqual(['[Unsplash]', '[{"url":"https://a.com/1.jpg"}]']);
+  });
+
+  it('treats a nested array as part of its outer array', () => {
+    expect(extractAllJsonArrays('[{"tags":["a","b"]}]')).toEqual(['[{"tags":["a","b"]}]']);
+  });
+
+  it('ignores an unbalanced bracket and continues', () => {
+    expect(extractAllJsonArrays('[oops then [1]')).toEqual(['[1]']);
+  });
+
+  it('returns an empty list when there is no array', () => {
+    expect(extractAllJsonArrays('no arrays here')).toEqual([]);
   });
 });
 

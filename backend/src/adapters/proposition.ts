@@ -12,7 +12,7 @@ import {
   extractLastAgentMessage,
   runCodexExec,
 } from './codex-runner.js';
-import { extractFirstJsonArray, stripAnsi } from './parse.js';
+import { extractAllJsonArrays, stripAnsi } from './parse.js';
 import { buildPropositionPrompt, buildPropositionRetryReminder } from './proposition-prompt.js';
 
 const RawVariantSchema = z.object({
@@ -64,26 +64,7 @@ function resolveMessage(result: CodexRunResult): string | null {
   return extractLastAgentMessage(result.stdout);
 }
 
-function parseOptions(result: CodexRunResult): PropositionOption[] | null {
-  const message = resolveMessage(result);
-  if (message === null) {
-    return null;
-  }
-  const arrayText = extractFirstJsonArray(stripAnsi(message));
-  if (arrayText === null) {
-    return null;
-  }
-
-  let parsed: unknown;
-  try {
-    parsed = JSON.parse(arrayText);
-  } catch {
-    return null;
-  }
-  if (!Array.isArray(parsed)) {
-    return null;
-  }
-
+function buildOptions(parsed: readonly unknown[]): PropositionOption[] {
   const options: PropositionOption[] = [];
   const seen = new Set<string>();
   for (const raw of parsed) {
@@ -117,6 +98,35 @@ function parseOptions(result: CodexRunResult): PropositionOption[] | null {
     });
   }
   return options;
+}
+
+// Defensive parse mirroring discovery: try every balanced array in the message (the model often adds
+// a prose preamble / ```json fence with stray brackets) and return the first that yields ≥1 option.
+function parseOptions(result: CodexRunResult): PropositionOption[] | null {
+  const message = resolveMessage(result);
+  if (message === null) {
+    return null;
+  }
+
+  let sawArray = false;
+  for (const arrayText of extractAllJsonArrays(stripAnsi(message))) {
+    let parsed: unknown;
+    try {
+      parsed = JSON.parse(arrayText);
+    } catch {
+      continue;
+    }
+    if (!Array.isArray(parsed)) {
+      continue;
+    }
+    sawArray = true;
+    const options = buildOptions(parsed);
+    if (options.length > 0) {
+      return options;
+    }
+  }
+
+  return sawArray ? [] : null;
 }
 
 // A second agentic seam: reuses the Codex runner + defensive parsing to turn a brief into distinct

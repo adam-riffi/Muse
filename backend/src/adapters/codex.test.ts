@@ -76,4 +76,42 @@ describe('discoverImages', () => {
     expect(error).toBeInstanceOf(CodexDiscoveryError);
     expect(error).toBeInstanceOf(Error);
   });
+
+  it('recovers the array from a prose preamble with a markdown link and a json fence', async () => {
+    const message = [
+      'I found great references on [Unsplash](https://unsplash.com) and [Pexels](https://pexels.com).',
+      '',
+      '```json',
+      '[{"url":"https://a.com/1.jpg","rationale":"fits"}]',
+      '```',
+    ].join('\n');
+    const { runner, calls } = fakeRunner([{ lastMessage: message }]);
+    const candidates = await discoverImages({ brief: 'x' }, { runner });
+    expect(candidates).toHaveLength(1);
+    expect(candidates[0]).toMatchObject({ url: 'https://a.com/1.jpg' });
+    expect(calls).toHaveLength(1); // no retry needed
+  });
+
+  it('skips a stray prose array and uses the real one', async () => {
+    const message =
+      'Considered tags like ["neon","grid"] then chose: [{"url":"https://a.com/2.jpg"}]';
+    const { runner } = fakeRunner([{ lastMessage: message }]);
+    const candidates = await discoverImages({ brief: 'x' }, { runner });
+    expect(candidates).toHaveLength(1);
+    expect(candidates[0]).toMatchObject({ url: 'https://a.com/2.jpg' });
+  });
+
+  it('accepts an array of bare URL strings', async () => {
+    const { runner } = fakeRunner([
+      { lastMessage: '["https://a.com/3.jpg","https://a.com/4.jpg"]' },
+    ]);
+    expect(await discoverImages({ brief: 'x' }, { runner })).toHaveLength(2);
+  });
+
+  it('recovers an array nested inside a wrapper object', async () => {
+    const { runner } = fakeRunner([
+      { lastMessage: '{"results": [{"url":"https://a.com/5.jpg"}]}' },
+    ]);
+    expect(await discoverImages({ brief: 'x' }, { runner })).toHaveLength(1);
+  });
 });
