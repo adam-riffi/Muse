@@ -114,4 +114,26 @@ describe('discoverImages', () => {
     ]);
     expect(await discoverImages({ brief: 'x' }, { runner })).toHaveLength(1);
   });
+
+  it('fails fast with a timeout message and no retry when the first run times out', async () => {
+    const { runner, calls } = fakeRunner([
+      { lastMessage: null, stdout: 'partial jsonl', timedOut: true },
+    ]);
+    await expect(discoverImages({ brief: 'x' }, { runner })).rejects.toMatchObject({
+      name: 'CodexDiscoveryError',
+      message: expect.stringContaining('timed out'),
+    });
+    expect(calls).toHaveLength(1); // no pointless retry
+  });
+
+  it('reports a timeout on the retry run', async () => {
+    const { runner, calls } = fakeRunner([
+      { lastMessage: 'not json' },
+      { lastMessage: null, stdout: 'partial', timedOut: true },
+    ]);
+    await expect(discoverImages({ brief: 'x' }, { runner })).rejects.toMatchObject({
+      message: expect.stringContaining('timed out'),
+    });
+    expect(calls).toHaveLength(2);
+  });
 });

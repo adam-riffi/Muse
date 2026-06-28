@@ -49,6 +49,9 @@ export class PropositionError extends Error {
   }
 }
 
+const PROPOSITION_TIMEOUT_MESSAGE =
+  'The style agent timed out before returning options. Try a shorter brief or search again.';
+
 function roundId(brief: string, refinements: readonly string[]): string {
   return imageId(`${brief}::${refinements.join('|')}`);
 }
@@ -151,10 +154,16 @@ export function createPropositionEngine(deps: PropositionEngineDeps = {}): Propo
       let options = parseOptions(first);
 
       if (options === null || options.length === 0) {
+        if (first.timedOut) {
+          throw new PropositionError(PROPOSITION_TIMEOUT_MESSAGE, first.stdout);
+        }
         const retryPrompt = `${basePrompt}\n\n${buildPropositionRetryReminder()}`;
         const second = await runner({ prompt: retryPrompt, ...runOptions });
         const retried = parseOptions(second);
         if (retried === null) {
+          if (second.timedOut) {
+            throw new PropositionError(PROPOSITION_TIMEOUT_MESSAGE, second.stdout);
+          }
           throw new PropositionError(
             'Failed to parse proposition output after one retry',
             resolveMessage(second) ?? second.stdout,

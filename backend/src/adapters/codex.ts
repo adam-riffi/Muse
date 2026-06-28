@@ -74,6 +74,9 @@ function tryParse(result: CodexRunResult): ImageCandidate[] | null {
   return sawArray ? [] : null;
 }
 
+const TIMEOUT_MESSAGE =
+  'The discovery agent timed out before returning results. Try a more specific brief or fewer images.';
+
 // The one public entry point of the seam. Everything Codex-specific is reached only through here;
 // callers receive normalized ImageCandidate[] or a CodexDiscoveryError with the raw output attached.
 export async function discoverImages(
@@ -94,12 +97,20 @@ export async function discoverImages(
   if (firstParsed !== null && firstParsed.length > 0) {
     return firstParsed;
   }
+  // A timed-out run produced no final message; an identical retry would just time out again, so fail
+  // fast with an accurate message instead of the misleading "failed to parse".
+  if (first.timedOut) {
+    throw new CodexDiscoveryError(TIMEOUT_MESSAGE, first.stdout);
+  }
 
   const retryPrompt = `${basePrompt}\n\n${buildStrictRetryReminder()}`;
   const second = await runner({ prompt: retryPrompt, ...runOptions });
   const secondParsed = tryParse(second);
   if (secondParsed !== null) {
     return secondParsed;
+  }
+  if (second.timedOut) {
+    throw new CodexDiscoveryError(TIMEOUT_MESSAGE, second.stdout);
   }
 
   const rawOutput = resolveMessage(second) ?? second.stdout;

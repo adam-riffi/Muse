@@ -166,6 +166,12 @@ scopes repo+workflow). Git identity: `Adam Riffi <211388619+adam-riffi@users.nor
 
 ## Decision log
 
+- **2026-06-28** — "Failed to parse … after one retry" was usually a **timeout**, not a parse error:
+  Codex over-searches (20+ web searches for 12 images) and was SIGKILLed at 120s with no final message.
+  Fix: default count 12 → 8, prompt asks the agent to search efficiently/stop early, runner timeout
+  120s → 240s, and a `timedOut` run fails fast with an accurate message (no identical retry). Applies to
+  discovery and propositions.
+
 - **2026-06-28** — Candidate images render through the **backend thumbnail proxy** (not raw URLs):
   the server fetches with a browser User-Agent + Accept (defeats referer/hotlink blocks) and tolerates
   generic `octet-stream`/missing content-types (sharp validates the bytes). A shared `CandidateImage`
