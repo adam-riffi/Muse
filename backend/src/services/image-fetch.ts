@@ -14,6 +14,18 @@ const DEFAULT_TIMEOUT_MS = 15_000;
 const DEFAULT_MAX_BYTES = 10 * 1024 * 1024;
 
 const ALLOWED_TYPES = new Set(['image/jpeg', 'image/png', 'image/webp', 'image/gif', 'image/avif']);
+// Some CDNs serve images with a generic or missing content-type; allow those through and let the
+// image decoder (sharp) validate the actual bytes. Explicit non-image types (text/html, json) stay
+// rejected so we never download an HTML error page as an "image".
+const PASSTHROUGH_TYPES = new Set(['', 'application/octet-stream', 'binary/octet-stream']);
+
+// A browser-like User-Agent + Accept dramatically improves success against image hosts that block
+// non-browser clients (a common reason thumbnails fail to load).
+const REQUEST_HEADERS: Record<string, string> = {
+  'user-agent':
+    'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
+  accept: 'image/avif,image/webp,image/apng,image/png,image/jpeg,*/*',
+};
 
 export class ImageFetchError extends Error {
   constructor(message: string) {
@@ -40,7 +52,11 @@ export async function fetchImage(
   }, timeoutMs);
 
   try {
-    const response = await fetchImpl(url, { signal: controller.signal, redirect: 'follow' });
+    const response = await fetchImpl(url, {
+      signal: controller.signal,
+      redirect: 'follow',
+      headers: REQUEST_HEADERS,
+    });
     if (!response.ok) {
       throw new ImageFetchError(`Image fetch failed with status ${response.status}`);
     }
@@ -49,7 +65,7 @@ export async function fetchImage(
       .split(';')[0]!
       .trim()
       .toLowerCase();
-    if (!ALLOWED_TYPES.has(contentType)) {
+    if (!ALLOWED_TYPES.has(contentType) && !PASSTHROUGH_TYPES.has(contentType)) {
       throw new ImageFetchError(`Unsupported content-type: ${contentType || 'unknown'}`);
     }
 

@@ -166,6 +166,11 @@ scopes repo+workflow). Git identity: `Adam Riffi <211388619+adam-riffi@users.nor
 
 ## Decision log
 
+- **2026-06-28** — Candidate images render through the **backend thumbnail proxy** (not raw URLs):
+  the server fetches with a browser User-Agent + Accept (defeats referer/hotlink blocks) and tolerates
+  generic `octet-stream`/missing content-types (sharp validates the bytes). A shared `CandidateImage`
+  shows an "image unavailable" placeholder on genuine failures (dead/blocked links the model returns).
+
 - **2026-06-28** — Agent output parsing is **multi-array tolerant**: `extractAllJsonArrays` returns
   every balanced `[...]`, and discovery/proposition parsers pick the first that yields valid items
   (handles prose preambles, markdown-link brackets, ```json fences, `{"results":[…]}` wrappers, and
