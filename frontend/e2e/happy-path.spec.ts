@@ -52,6 +52,12 @@ test.beforeEach(async ({ page }) => {
   await page.route('**/api/**', async (route) => {
     const url = route.request().url();
     if (url.includes('/api/propose')) return json(route, round);
+    if (url.includes('/api/discover/stream')) {
+      const body =
+        `event: activity\ndata: ${JSON.stringify({ kind: 'search', query: 'cozy reading nook' })}\n\n` +
+        `event: result\ndata: ${JSON.stringify(candidates)}\n\n`;
+      return route.fulfill({ status: 200, contentType: 'text/event-stream', body });
+    }
     if (url.includes('/api/discover')) return json(route, candidates);
     if (url.includes('/api/synthesize')) return json(route, analysis);
     if (url.includes('/api/board')) {
