@@ -83,4 +83,19 @@ describe('POST /export', () => {
       await app.close();
     }
   });
+
+  it('accepts a multi-megabyte board PNG without a 413', async () => {
+    const app = appWithCandidate();
+    try {
+      const bigBoardPng = 'A'.repeat(3 * 1024 * 1024); // ~3 MB, well over Fastify's 1 MB default
+      const response = await app.inject({
+        method: 'POST',
+        url: '/export',
+        payload: { imageIds: ['a'], analysis, boardPng: bigBoardPng },
+      });
+      expect(response.statusCode).toBe(200);
+    } finally {
+      await app.close();
+    }
+  });
 });

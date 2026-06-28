@@ -47,7 +47,9 @@ export type BuildServerOptions = {
 };
 
 export function buildServer({ config, deps }: BuildServerOptions): FastifyInstance {
-  const app = Fastify({ logger: resolveLogger(config) });
+  // The /export body carries the rasterized board PNG (base64), which is far larger than Fastify's
+  // 1 MB default — raise the limit so exports don't 413.
+  const app = Fastify({ logger: resolveLogger(config), bodyLimit: 50 * 1024 * 1024 });
   const store = deps?.store ?? createSessionStore();
   const runner = resolveAgentRunner(config);
   const discover =
