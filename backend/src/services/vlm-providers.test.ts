@@ -1,12 +1,23 @@
 import { describe, expect, it, vi } from 'vitest';
+import sharp from 'sharp';
 import { loadConfig } from '../config.js';
 import type { VlmImage } from './vlm.js';
 import {
   VlmProviderError,
   createAnthropicProvider,
+  createCopilotVlmProvider,
   createOpenAiProvider,
   createVlmProvider,
 } from './vlm-providers.js';
+
+function pngBase64(): Promise<string> {
+  return sharp({
+    create: { width: 8, height: 8, channels: 3, background: { r: 10, g: 20, b: 30 } },
+  })
+    .png()
+    .toBuffer()
+    .then((b) => b.toString('base64'));
+}
 
 function jsonResponse(body: unknown, ok = true, status = 200): Response {
   return { ok, status, json: async () => body } as unknown as Response;
@@ -72,5 +83,31 @@ describe('createVlmProvider', () => {
     expect(
       createVlmProvider(loadConfig({ VLM_PROVIDER: 'openai', OPENAI_API_KEY: 'k' }))?.name,
     ).toBe('openai');
+  });
+
+  it('selects the Copilot CLI provider without an API key', () => {
+    expect(createVlmProvider(loadConfig({ VLM_PROVIDER: 'copilot' }))?.name).toBe('copilot');
+  });
+});
+
+describe('createCopilotVlmProvider', () => {
+  it('normalizes images to attachments and runs the CLI exec', async () => {
+    let received: { prompt: string; paths: string[] } | undefined;
+    const exec = vi.fn(async (prompt: string, paths: string[]) => {
+      received = { prompt, paths };
+      return '{"summary":"ok"}';
+    });
+    const provider = createCopilotVlmProvider({ exec });
+
+    const data = await pngBase64();
+    const out = await provider.complete('analyze these', [
+      { mediaType: 'image/png', data },
+      { mediaType: 'image/png', data },
+    ]);
+
+    expect(out).toBe('{"summary":"ok"}');
+    expect(received?.prompt).toBe('analyze these');
+    expect(received?.paths).toHaveLength(2);
+    expect(received?.paths.every((p) => p.endsWith('.png'))).toBe(true);
   });
 });

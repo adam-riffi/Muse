@@ -1,4 +1,10 @@
+import { spawn } from 'node:child_process';
+import { mkdtemp, rm, writeFile } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
+import sharp from 'sharp';
 import type { AppConfig } from '../config.js';
+import { extractLastCopilotMessage } from '../adapters/agent-runner.js';
 import type { VlmImage, VlmProvider } from './vlm.js';
 
 type FetchFn = typeof fetch;
@@ -92,6 +98,114 @@ export function createOpenAiProvider(apiKey: string, deps: OpenAiDeps = {}): Vlm
   };
 }
 
+// --- Copilot CLI vision provider (no API key) ---------------------------------------------------
+// Drives the locally-authenticated GitHub Copilot CLI for vision: write the kept images to temp
+// files, attach them with `--attachment`, and run a one-shot prompt. Lets synthesis work without an
+// Anthropic/OpenAI key — the same "use the local agent CLI" idea as discovery.
+
+const COPILOT_VLM_TIMEOUT_MS = 180_000;
+const VLM_IMAGE_MAX_DIM = 768;
+
+export type CopilotVlmExec = (
+  prompt: string,
+  attachmentPaths: string[],
+  model?: string,
+) => Promise<string>;
+
+function copilotErrorFrom(stdout: string): string | null {
+  for (const line of stdout.split('\n')) {
+    const trimmed = line.trim();
+    if (trimmed === '') continue;
+    try {
+      const event = JSON.parse(trimmed) as { type?: string; data?: { message?: unknown } };
+      if (event.type === 'session.error' && typeof event.data?.message === 'string') {
+        return event.data.message.slice(0, 200);
+      }
+    } catch {
+      // ignore
+    }
+  }
+  return null;
+}
+
+const runCopilotWithAttachments: CopilotVlmExec = async (prompt, attachmentPaths, model) => {
+  const bin = process.env.COPILOT_BIN ?? 'copilot';
+  const args = [
+    '--allow-all-tools',
+    '--output-format',
+    'json',
+    '--no-color',
+    '--log-level',
+    'none',
+  ];
+  if (model !== undefined) {
+    args.push('--model', model);
+  }
+  for (const path of attachmentPaths) {
+    args.push('--attachment', path);
+  }
+  args.push('-p', prompt);
+
+  const cwd = await mkdtemp(join(tmpdir(), 'muse-vlm-cwd-'));
+  try {
+    const stdout = await new Promise<string>((resolve, reject) => {
+      const child = spawn(bin, args, { cwd, stdio: ['ignore', 'pipe', 'pipe'] });
+      let out = '';
+      const timer = setTimeout(() => child.kill('SIGKILL'), COPILOT_VLM_TIMEOUT_MS);
+      child.stdout?.on('data', (chunk: Buffer) => {
+        out += chunk.toString();
+      });
+      child.on('error', (error) => {
+        clearTimeout(timer);
+        reject(error);
+      });
+      child.on('close', () => {
+        clearTimeout(timer);
+        resolve(out);
+      });
+    });
+
+    const message = extractLastCopilotMessage(stdout);
+    if (message === null) {
+      throw new VlmProviderError(copilotErrorFrom(stdout) ?? 'Copilot CLI returned no analysis');
+    }
+    return message;
+  } finally {
+    await rm(cwd, { recursive: true, force: true }).catch(() => undefined);
+  }
+};
+
+export type CopilotVlmDeps = { exec?: CopilotVlmExec; model?: string };
+
+export function createCopilotVlmProvider(deps: CopilotVlmDeps = {}): VlmProvider {
+  const exec = deps.exec ?? runCopilotWithAttachments;
+  return {
+    name: 'copilot',
+    async complete(prompt, images: readonly VlmImage[]) {
+      const dir = await mkdtemp(join(tmpdir(), 'muse-vlm-'));
+      const paths: string[] = [];
+      try {
+        for (const [index, image] of images.entries()) {
+          // Normalize to a sane-sized PNG so the CLI reliably accepts the attachment.
+          const png = await sharp(Buffer.from(image.data, 'base64'))
+            .resize(VLM_IMAGE_MAX_DIM, VLM_IMAGE_MAX_DIM, {
+              fit: 'inside',
+              withoutEnlargement: true,
+            })
+            .png()
+            .toBuffer();
+          const path = join(dir, `image-${index}.png`);
+          await writeFile(path, png);
+          paths.push(path);
+        }
+        return await exec(prompt, paths, deps.model);
+      } finally {
+        await rm(dir, { recursive: true, force: true }).catch(() => undefined);
+      }
+    },
+  };
+}
+
 // Selects a VLM provider from config. Returns null when disabled ('none') or when the chosen
 // provider has no API key — callers surface that as "no VLM configured".
 export function createVlmProvider(config: AppConfig): VlmProvider | null {
@@ -105,6 +219,8 @@ export function createVlmProvider(config: AppConfig): VlmProvider | null {
       return config.openaiApiKey !== undefined
         ? createOpenAiProvider(config.openaiApiKey, model !== undefined ? { model } : {})
         : null;
+    case 'copilot':
+      return createCopilotVlmProvider(model !== undefined ? { model } : {});
     default:
       return null;
   }
