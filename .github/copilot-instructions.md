@@ -166,6 +166,12 @@ scopes repo+workflow). Git identity: `Adam Riffi <211388619+adam-riffi@users.nor
 
 ## Decision log
 
+- **2026-06-28** — Discovery streams progress over **SSE** (`GET /discover/stream`): each agent CLI's
+  JSONL is normalized to an `AgentStreamEvent` union (`@muse/shared`) and relayed live so the UI shows
+  reasoning + web searches. Runners gained line-buffered `onStdoutLine`; the frontend uses EventSource
+  with a non-streaming fallback (jsdom/tests). The `failed` event name avoids EventSource's reserved
+  `error`. Verified live (Codex emitted 11 real web-search frames before the result).
+
 - **2026-06-28** — Agent CLI is pluggable behind `AgentRunner`: Codex (default) or GitHub Copilot
   CLI, via `AGENT_CLI`. Detection is exposed on `/health` (not a hard startup gate) so the app still
   boots without a CLI; discovery/propositions then fail clearly (502). VLM stays a separate seam.

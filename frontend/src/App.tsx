@@ -1,6 +1,7 @@
 import { BriefForm } from './components/BriefForm';
 import { CandidateGrid } from './components/CandidateGrid';
 import { CandidateTray } from './components/CandidateTray';
+import { DiscoveryActivity } from './components/DiscoveryActivity';
 import { ExportPanel } from './components/ExportPanel';
 import { PropositionGrid } from './components/PropositionGrid';
 import { RefinementBreadcrumb } from './components/RefinementBreadcrumb';
@@ -19,7 +20,7 @@ export function App() {
 
   const discoverStatus = useCandidateStore((state) => state.status);
   const discoverError = useCandidateStore((state) => state.error);
-  const runDiscovery = useCandidateStore((state) => state.runDiscovery);
+  const runDiscovery = useCandidateStore((state) => state.runDiscoveryStream);
 
   return (
     <main className="min-h-screen bg-zinc-950 text-zinc-100">
@@ -75,6 +76,8 @@ export function App() {
             {discoverError ?? 'Discovery failed'}
           </p>
         )}
+
+        <DiscoveryActivity />
 
         <CandidateGrid />
 

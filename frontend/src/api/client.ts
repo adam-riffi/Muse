@@ -1,4 +1,10 @@
-import type { BoardState, ImageCandidate, MoodboardAnalysis, PropositionRound } from '@muse/shared';
+import type {
+  AgentStreamEvent,
+  BoardState,
+  ImageCandidate,
+  MoodboardAnalysis,
+  PropositionRound,
+} from '@muse/shared';
 
 const API_BASE = import.meta.env.VITE_API_BASE ?? '/api';
 
@@ -28,6 +34,81 @@ export async function discover(
     throw new Error(`Discovery request failed with status ${response.status}`);
   }
   return (await response.json()) as ImageCandidate[];
+}
+
+export type DiscoveryStreamHandlers = {
+  onActivity: (event: AgentStreamEvent) => void;
+  onResult: (candidates: ImageCandidate[]) => void;
+  onFailure: (message: string) => void;
+};
+
+type EventSourceLike = {
+  addEventListener: (type: string, listener: (event: { data: string }) => void) => void;
+  close: () => void;
+  onerror: ((event: unknown) => void) | null;
+};
+
+// Subscribes to the SSE discovery stream, forwarding live progress (reasoning / web searches) and the
+// terminal candidate list. Returns an unsubscribe function. The EventSource factory is injectable for
+// tests. `data` payloads are JSON.
+export function streamDiscover(
+  request: DiscoverRequest,
+  handlers: DiscoveryStreamHandlers,
+  makeEventSource: (url: string) => EventSourceLike = (url) =>
+    new EventSource(url) as unknown as EventSourceLike,
+): () => void {
+  const params = new URLSearchParams({ brief: request.brief });
+  if (request.count !== undefined) {
+    params.set('count', String(request.count));
+  }
+  if (request.refinements && request.refinements.length > 0) {
+    params.set('refinements', JSON.stringify(request.refinements));
+  }
+
+  const source = makeEventSource(`${API_BASE}/discover/stream?${params.toString()}`);
+  let done = false;
+  const finish = (): void => {
+    if (!done) {
+      done = true;
+      source.close();
+    }
+  };
+
+  const forwardActivity = (event: { data: string }): void => {
+    try {
+      handlers.onActivity(JSON.parse(event.data) as AgentStreamEvent);
+    } catch {
+      // ignore malformed activity frames
+    }
+  };
+  source.addEventListener('status', forwardActivity);
+  source.addEventListener('activity', forwardActivity);
+  source.addEventListener('result', (event) => {
+    try {
+      handlers.onResult(JSON.parse(event.data) as ImageCandidate[]);
+    } catch {
+      handlers.onFailure('Received a malformed result');
+    }
+    finish();
+  });
+  source.addEventListener('failed', (event) => {
+    let message = 'Discovery failed';
+    try {
+      message = (JSON.parse(event.data) as { message?: string }).message ?? message;
+    } catch {
+      // keep default
+    }
+    handlers.onFailure(message);
+    finish();
+  });
+  source.onerror = () => {
+    if (!done) {
+      handlers.onFailure('Connection to the discovery stream was lost');
+      finish();
+    }
+  };
+
+  return finish;
 }
 
 export async function propose(
