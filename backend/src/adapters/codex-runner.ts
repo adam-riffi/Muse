@@ -24,7 +24,7 @@ export type CodexRunResult = {
 /** Injectable seam: the orchestration depends on this signature so tests can supply a fake. */
 export type CodexRunner = (input: CodexRunInput) => Promise<CodexRunResult>;
 
-const DEFAULT_TIMEOUT_MS = 120_000;
+const DEFAULT_TIMEOUT_MS = 240_000;
 
 // Pure: the exact non-interactive invocation, isolated for testing. `--color never` + `--ephemeral`
 // + `--skip-git-repo-check` keep output clean and side-effect-free; the prompt is always last.

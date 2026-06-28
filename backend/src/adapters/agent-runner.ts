@@ -18,7 +18,7 @@ export type AgentRunner = CodexRunner;
 export type AgentRunInput = CodexRunInput;
 export type AgentRunResult = CodexRunResult;
 
-const DEFAULT_TIMEOUT_MS = 120_000;
+const DEFAULT_TIMEOUT_MS = 240_000;
 
 // Pure: the exact non-interactive Copilot invocation. `-p` runs a one-shot prompt; `--allow-all-tools`
 // is required for non-interactive mode; `--output-format json` emits JSONL events we parse; `--no-color`

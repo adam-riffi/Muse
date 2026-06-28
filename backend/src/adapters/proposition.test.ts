@@ -93,4 +93,17 @@ describe('createPropositionEngine', () => {
     expect(round.options).toHaveLength(2);
     expect(calls).toHaveLength(1);
   });
+
+  it('fails fast with a timeout message when the run times out', async () => {
+    const { runner, calls } = fakeRunner([
+      { lastMessage: null, stdout: 'partial', timedOut: true },
+    ]);
+    await expect(
+      createPropositionEngine({ runner }).propose({ brief: 'anime' }),
+    ).rejects.toMatchObject({
+      name: 'PropositionError',
+      message: expect.stringContaining('timed out'),
+    });
+    expect(calls).toHaveLength(1);
+  });
 });

@@ -1,6 +1,6 @@
-import { thumbnailUrl } from '../api/client';
 import { useBoardStore } from '../state/board';
 import { useCandidateStore } from '../state/candidates';
+import { CandidateImage } from './CandidateImage';
 
 export function CandidateTray() {
   const candidates = useCandidateStore((state) => state.candidates);
@@ -20,12 +20,7 @@ export function CandidateTray() {
           key={candidate.id}
           className="overflow-hidden rounded-lg border border-zinc-800 bg-zinc-900"
         >
-          <img
-            src={thumbnailUrl(candidate.id)}
-            alt={candidate.title ?? candidate.rationale}
-            loading="lazy"
-            className="aspect-square w-full object-cover"
-          />
+          <CandidateImage candidate={candidate} className="aspect-square w-full object-cover" />
           <button
             type="button"
             onClick={() => {
