@@ -166,6 +166,13 @@ scopes repo+workflow). Git identity: `Adam Riffi <211388619+adam-riffi@users.nor
 
 ## Decision log
 
+- **2026-06-30** — **v2 started.** Front/back boundary formalized + ESLint-enforced for future UI
+  refactors: `frontend/src/api/` = `config` (API_BASE) + `client` (the ONLY network seam) + `urls`
+  (pure builders). Rules: frontend never imports backend; components never import `api/client` (go via
+  `state/*` stores); pure URL builders (`api/urls`) are the one UI-safe api import. A redesigned UI
+  only needs `state/*` actions/selectors + `@muse/shared`. See `docs/ARCHITECTURE.md`. (v2 roadmap in
+  session `plan.md` §9: Epic 0 speed/reliability → B prompts → A multi-agent intake.)
+
 - **2026-06-28** — Synthesis is format/link resilient: every kept image is normalized to **PNG via
   sharp before node-vibrant** (Jimp can't decode WebP/AVIF → was a 500), undecodable images are
   skipped, and the synthesizer **skips kept images that fail to fetch** (dead/blocked links),
