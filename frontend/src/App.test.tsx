@@ -5,12 +5,14 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { App } from './App';
 import { server } from './test/msw/server';
 import { useCandidateStore } from './state/candidates';
+import { useClarifyStore } from './state/clarify';
 import { usePropositionStore } from './state/propositions';
 
 vi.mock('tldraw', () => ({ Tldraw: () => null }));
 
 beforeEach(() => {
   useCandidateStore.getState().reset();
+  useClarifyStore.getState().reset();
   usePropositionStore.getState().reset();
 });
 
@@ -21,12 +23,17 @@ describe('App', () => {
     expect(screen.getByRole('region', { name: 'Whiteboard' })).toBeInTheDocument();
   });
 
-  it('runs the propose → refine → search flow', async () => {
+  it('runs the brief → clarify → propose → refine → search flow', async () => {
     const user = userEvent.setup();
     render(<App />);
 
-    // Brief → proposition round
+    // Brief → the agent asks a clarifying question first
     await user.type(screen.getByLabelText('Project brief'), 'anime aesthetic');
+    await user.click(screen.getByRole('button', { name: /explore styles/i }));
+    expect(await screen.findByText('What overall mood?')).toBeInTheDocument();
+
+    // Answer + continue → proposition round
+    await user.type(screen.getByRole('textbox'), 'dreamy');
     await user.click(screen.getByRole('button', { name: /explore styles/i }));
     expect(await screen.findByText('Ghibli')).toBeInTheDocument();
 
@@ -50,6 +57,8 @@ describe('App', () => {
 
     await user.type(screen.getByLabelText('Project brief'), 'x');
     await user.click(screen.getByRole('button', { name: /explore styles/i }));
+    // Skip the clarifying questions straight to the (failing) proposition step
+    await user.click(await screen.findByRole('button', { name: /skip/i }));
 
     expect(await screen.findByRole('alert')).toBeInTheDocument();
   });

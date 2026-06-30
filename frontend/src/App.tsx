@@ -1,15 +1,22 @@
 import { BriefForm } from './components/BriefForm';
 import { CandidateGrid } from './components/CandidateGrid';
 import { CandidateTray } from './components/CandidateTray';
+import { ClarifyForm } from './components/ClarifyForm';
 import { DiscoveryActivity } from './components/DiscoveryActivity';
 import { ExportPanel } from './components/ExportPanel';
 import { PropositionGrid } from './components/PropositionGrid';
 import { RefinementBreadcrumb } from './components/RefinementBreadcrumb';
 import { Whiteboard } from './components/Whiteboard';
 import { useCandidateStore } from './state/candidates';
+import { useClarifyStore } from './state/clarify';
 import { usePropositionStore } from './state/propositions';
 
 export function App() {
+  const clarifyStatus = useClarifyStore((state) => state.status);
+  const clarifyBrief = useClarifyStore((state) => state.brief);
+  const startClarify = useClarifyStore((state) => state.start);
+  const resetClarify = useClarifyStore((state) => state.reset);
+
   const propStatus = usePropositionStore((state) => state.status);
   const propError = usePropositionStore((state) => state.error);
   const round = usePropositionStore((state) => state.round);
@@ -21,6 +28,13 @@ export function App() {
   const discoverStatus = useCandidateStore((state) => state.status);
   const discoverError = useCandidateStore((state) => state.error);
   const runDiscovery = useCandidateStore((state) => state.runDiscoveryStream);
+  const resetCandidates = useCandidateStore((state) => state.reset);
+
+  const startOver = (): void => {
+    resetPropositions();
+    resetClarify();
+    resetCandidates();
+  };
 
   return (
     <main className="min-h-screen bg-zinc-950 text-zinc-100">
@@ -28,14 +42,18 @@ export function App() {
         <header className="space-y-1">
           <h1 className="text-3xl font-semibold tracking-tight">Muse</h1>
           <p className="text-zinc-400">
-            Describe a project; refine the style; discover references; curate.
+            Describe a project; answer a few questions; refine the style; discover references;
+            curate.
           </p>
         </header>
 
-        <BriefForm
-          onSubmit={(value) => void startPropositions(value)}
-          loading={propStatus === 'loading'}
-        />
+        {round === null && clarifyStatus === 'idle' && (
+          <BriefForm onSubmit={(value) => void startClarify(value)} loading={false} />
+        )}
+
+        {round === null && clarifyStatus !== 'idle' && (
+          <ClarifyForm onSubmit={(answers) => void startPropositions(clarifyBrief, answers)} />
+        )}
 
         {propStatus === 'error' && (
           <p role="alert" className="text-red-400">
@@ -58,9 +76,7 @@ export function App() {
                 </button>
                 <button
                   type="button"
-                  onClick={() => {
-                    resetPropositions();
-                  }}
+                  onClick={startOver}
                   className="rounded-lg border border-zinc-700 px-4 py-2 text-zinc-300 transition hover:bg-zinc-800"
                 >
                   Start over

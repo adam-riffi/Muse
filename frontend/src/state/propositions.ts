@@ -10,7 +10,7 @@ export type PropositionState = {
   refinements: string[];
   status: PropositionStatus;
   error: string | null;
-  start: (brief: string) => Promise<void>;
+  start: (brief: string, refinements?: string[]) => Promise<void>;
   pick: (option: PropositionOption) => Promise<void>;
   reset: () => void;
 };
@@ -35,7 +35,7 @@ export const usePropositionStore = create<PropositionState>((set, get) => {
     refinements: [],
     status: 'idle',
     error: null,
-    start: (brief) => runRound(brief, []),
+    start: (brief, refinements = []) => runRound(brief, refinements),
     pick: (option) => runRound(get().brief, [...get().refinements, option.descriptor]),
     reset: () => {
       set({ brief: '', round: null, refinements: [], status: 'idle', error: null });

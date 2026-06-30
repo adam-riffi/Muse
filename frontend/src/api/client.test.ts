@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { discover, exportBundle, propose, searchImages, synthesize } from './client';
+import { clarify, discover, exportBundle, propose, searchImages, synthesize } from './client';
 import { thumbnailUrl } from './urls';
 
 describe('api client', () => {
@@ -13,6 +13,12 @@ describe('api client', () => {
     const round = await propose({ brief: 'anime' });
     expect(round.id).toBe('round-1');
     expect(round.options.length).toBeGreaterThan(0);
+  });
+
+  it('clarify() returns intake questions', async () => {
+    const result = await clarify('a coffee brand');
+    expect(result.questions.length).toBeGreaterThan(0);
+    expect(result.questions[0]).toMatchObject({ id: 'q1' });
   });
 
   it('thumbnailUrl() builds the thumbnail endpoint path', () => {
