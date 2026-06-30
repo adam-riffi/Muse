@@ -1,6 +1,7 @@
 import type {
   AgentStreamEvent,
   BoardState,
+  ClarifyResult,
   ImageCandidate,
   MoodboardAnalysis,
   PropositionRound,
@@ -124,6 +125,23 @@ export async function propose(
     throw new Error(`Proposition request failed with status ${response.status}`);
   }
   return (await response.json()) as PropositionRound;
+}
+
+export async function clarify(
+  brief: string,
+  count?: number,
+  signal?: AbortSignal,
+): Promise<ClarifyResult> {
+  const response = await fetch(`${API_BASE}/clarify`, {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({ brief, ...(count !== undefined ? { count } : {}) }),
+    signal,
+  });
+  if (!response.ok) {
+    throw new Error(`Clarify request failed with status ${response.status}`);
+  }
+  return (await response.json()) as ClarifyResult;
 }
 
 export async function searchImages(
