@@ -5,7 +5,8 @@ import {
   type ImageCandidate,
   keptCandidateIds,
 } from '@muse/shared';
-import { thumbnailUrl, saveBoard } from '../api/client';
+import { saveBoard } from '../api/client';
+import { thumbnailUrl } from '../api/urls';
 import {
   cameraToViewport,
   mapTldrawShape,

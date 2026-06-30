@@ -5,8 +5,7 @@ import type {
   MoodboardAnalysis,
   PropositionRound,
 } from '@muse/shared';
-
-const API_BASE = import.meta.env.VITE_API_BASE ?? '/api';
+import { API_BASE } from './config';
 
 export type DiscoverRequest = {
   brief: string;
@@ -125,10 +124,6 @@ export async function propose(
     throw new Error(`Proposition request failed with status ${response.status}`);
   }
   return (await response.json()) as PropositionRound;
-}
-
-export function thumbnailUrl(id: string): string {
-  return `${API_BASE}/image/${id}/thumbnail`;
 }
 
 export async function searchImages(
