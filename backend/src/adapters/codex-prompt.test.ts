@@ -29,6 +29,13 @@ describe('buildDiscoveryPrompt', () => {
   it('omits the refinement block when none are given', () => {
     expect(buildDiscoveryPrompt({ brief: 'anime' })).not.toContain('Refined style direction');
   });
+
+  it('anchors the brief as the fixed subject so refinements cannot pull it off-direction', () => {
+    const prompt = buildDiscoveryPrompt({ brief: 'death note terminal', refinements: ['neon'] });
+    expect(prompt).toContain('never drift');
+    expect(prompt).toContain('unmistakably read as "death note terminal"');
+    expect(prompt).toContain('they never replace the subject');
+  });
 });
 
 describe('buildStrictRetryReminder', () => {

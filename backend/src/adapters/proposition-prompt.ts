@@ -13,24 +13,31 @@ export function buildPropositionPrompt({
   refinements = [],
   count = DEFAULT_COUNT,
 }: PropositionPromptInput): string {
-  const refinementBlock =
-    refinements.length > 0
-      ? `\nAlready-chosen direction (propose distinct sub-styles WITHIN this): ${refinements.join('; ')}.`
-      : '';
+  const subject = brief.trim();
 
-  return [
+  const lines = [
     'You are a visual-style scout refining a moodboard brief into distinct sub-styles.',
-    `For this brief: "${brief.trim()}".${refinementBlock}`,
-    `Propose ${count} DISTINCT sub-styles that differ meaningfully in aesthetic direction.`,
+    `Brief — every sub-style MUST be a clear variation of THIS subject, never a tangent: "${subject}".`,
+    'Read it as a VISUAL / design aesthetic (interpret ambiguous words as design intent, not literal objects).',
+  ];
+
+  if (refinements.length > 0) {
+    lines.push(`Already-chosen direction (stay within this): ${refinements.join('; ')}.`);
+  }
+
+  lines.push(
+    `Propose ${count} DISTINCT sub-styles that each still unmistakably read as the brief but differ in aesthetic treatment.`,
     'For each sub-style provide:',
     '- "label": a short name (1-3 words), e.g. "Ghibli" or "Y2K".',
-    '- "descriptor": one phrase describing the aesthetic, suitable to sharpen an image search.',
-    '- "query": a concrete web-search query that would surface this sub-style.',
-    '- "previewUrl": a direct link to ONE representative image file (jpg/png/webp) via web search.',
+    '- "descriptor": one phrase describing the aesthetic, consistent with the brief, suitable to sharpen an image search.',
+    '- "query": a concrete web-search query that surfaces THIS sub-style FOR THIS brief.',
+    '- "previewUrl": a direct image link (jpg/png/webp) that genuinely EXEMPLIFIES this descriptor — not a generic or loosely related image. The preview must match the descriptor so a user can pick by sight.',
     '',
     `Return ONLY a JSON array of objects with EXACTLY these fields: ${FIELDS}.`,
     'No prose, no markdown fences — output must start with "[" and end with "]".',
-  ].join('\n');
+  );
+
+  return lines.join('\n');
 }
 
 export function buildPropositionRetryReminder(): string {
