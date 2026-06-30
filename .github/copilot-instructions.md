@@ -166,6 +166,13 @@ scopes repo+workflow). Git identity: `Adam Riffi <211388619+adam-riffi@users.nor
 
 ## Decision log
 
+- **2026-06-30** — **v2 intake (clarify-before-search).** After the brief, an intake agent
+  (`adapters/clarify.ts` `createClarifier`, same runner seam; defensive JSON parse + retry +
+  timeout-aware; no web search → fast) asks ≤N short questions via `POST /clarify`; answers seed the
+  proposition/discovery `refinements`. Frontend: `state/clarify.ts` + `ClarifyForm` between `BriefForm`
+  and propositions (skip / "search anyway" hatches). Flow is now brief → clarify → propose → discover.
+  First slice of Phase Two Epic A (full multi-agent intake with confidence/pivots comes later).
+
 - **2026-06-30** — **v2 started.** Front/back boundary formalized + ESLint-enforced for future UI
   refactors: `frontend/src/api/` = `config` (API_BASE) + `client` (the ONLY network seam) + `urls`
   (pure builders). Rules: frontend never imports backend; components never import `api/client` (go via
