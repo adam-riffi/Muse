@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import type { ImageCandidate } from '@muse/shared';
-import { thumbnailUrl } from '../api/client';
+import { thumbnailUrl } from '../api/urls';
 
 function hostOf(url: string): string {
   try {

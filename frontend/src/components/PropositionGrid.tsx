@@ -1,4 +1,4 @@
-import { thumbnailUrl } from '../api/client';
+import { thumbnailUrl } from '../api/urls';
 import { usePropositionStore } from '../state/propositions';
 
 export function PropositionGrid() {

@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { discover, exportBundle, propose, searchImages, synthesize, thumbnailUrl } from './client';
+import { discover, exportBundle, propose, searchImages, synthesize } from './client';
+import { thumbnailUrl } from './urls';
 
 describe('api client', () => {
   it('discover() returns parsed candidates from the backend', async () => {
