@@ -166,6 +166,14 @@ scopes repo+workflow). Git identity: `Adam Riffi <211388619+adam-riffi@users.nor
 
 ## Decision log
 
+- **2026-06-30** — **Search coherence fix.** Discovery drifted off-brief because the prompt said
+  refinements "must strongly influence results" and quoted the brief once. Re-anchored: the brief is
+  the fixed SUBJECT ("never drift", "must unmistakably read as the subject", read as a visual
+  aesthetic), refinements only sharpen it. Proposition prompt tethered the same way + preview must
+  exemplify the descriptor (pick-by-sight matches the search). Verified live (Death-Note-terminal
+  brief → consistently on-theme). NB: picks still pass a TEXT descriptor, not the chosen image —
+  visual-anchored search (pass the picked image to discovery/VLM) is the deeper roadmap fix.
+
 - **2026-06-30** — **v2 intake (clarify-before-search).** After the brief, an intake agent
   (`adapters/clarify.ts` `createClarifier`, same runner seam; defensive JSON parse + retry +
   timeout-aware; no web search → fast) asks ≤N short questions via `POST /clarify`; answers seed the
