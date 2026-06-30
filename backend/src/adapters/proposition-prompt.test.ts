@@ -30,6 +30,12 @@ describe('buildPropositionPrompt', () => {
   it('omits the refinement block when none are given', () => {
     expect(buildPropositionPrompt({ brief: 'anime' })).not.toContain('Already-chosen direction');
   });
+
+  it('keeps sub-styles tethered to the brief and the preview faithful to the descriptor', () => {
+    const prompt = buildPropositionPrompt({ brief: 'death note terminal' });
+    expect(prompt).toContain('clear variation of THIS subject, never a tangent');
+    expect(prompt).toContain('EXEMPLIFIES this descriptor');
+  });
 });
 
 describe('buildPropositionRetryReminder', () => {
