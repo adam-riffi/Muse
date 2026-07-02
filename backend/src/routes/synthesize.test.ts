@@ -4,6 +4,7 @@ import { buildServer } from '../app.js';
 import { loadConfig } from '../config.js';
 import { SynthesizeError } from '../services/synthesize.js';
 import { VlmAnalysisError } from '../services/vlm.js';
+import { VlmProviderError } from '../services/vlm-providers.js';
 
 const config = loadConfig({ NODE_ENV: 'test' });
 
@@ -93,6 +94,30 @@ describe('POST /synthesize', () => {
     } finally {
       await badIds.close();
       await badVlm.close();
+    }
+  });
+
+  it('maps a VlmProviderError (e.g. quota) to a clear 502', async () => {
+    const app = buildServer({
+      config,
+      deps: {
+        synthesize: async () => {
+          throw new VlmProviderError('You have exceeded your monthly quota');
+        },
+      },
+    });
+    try {
+      const response = await app.inject({
+        method: 'POST',
+        url: '/synthesize',
+        payload: { imageIds: ['a'] },
+      });
+      expect(response.statusCode).toBe(502);
+      expect(response.json()).toMatchObject({
+        message: expect.stringContaining('Vision model unavailable'),
+      });
+    } finally {
+      await app.close();
     }
   });
 });

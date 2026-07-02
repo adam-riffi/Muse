@@ -3,6 +3,7 @@ import { z } from 'zod';
 import type { MoodboardAnalysis } from '@muse/shared';
 import { SynthesizeError } from '../services/synthesize.js';
 import { VlmAnalysisError } from '../services/vlm.js';
+import { VlmProviderError } from '../services/vlm-providers.js';
 
 export const SynthesizeInputSchema = z.object({
   imageIds: z.array(z.string().min(1)).min(1),
@@ -43,6 +44,12 @@ export function registerSynthesizeRoute(app: FastifyInstance, deps: SynthesizeRo
           error: 'Synthesis Failed',
           message: error.message,
           raw: error.rawOutput,
+        });
+      }
+      if (error instanceof VlmProviderError) {
+        return reply.code(502).send({
+          error: 'Synthesis Failed',
+          message: `Vision model unavailable: ${error.message}`,
         });
       }
       throw error;
