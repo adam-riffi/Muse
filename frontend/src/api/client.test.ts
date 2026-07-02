@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest';
+import { http, HttpResponse } from 'msw';
 import { clarify, discover, exportBundle, propose, searchImages, synthesize } from './client';
 import { thumbnailUrl } from './urls';
+import { server } from '../test/msw/server';
 
 describe('api client', () => {
   it('discover() returns parsed candidates from the backend', async () => {
@@ -37,9 +39,36 @@ describe('api client', () => {
     expect(analysis.palette[0]).toMatchObject({ role: 'dominant' });
   });
 
+  it('synthesize() surfaces the backend error message on failure', async () => {
+    server.use(
+      http.post('/api/synthesize', () =>
+        HttpResponse.json(
+          { error: 'Synthesis Failed', message: 'Vision model unavailable: quota exceeded' },
+          { status: 502 },
+        ),
+      ),
+    );
+    await expect(synthesize(['a'])).rejects.toThrow('Vision model unavailable: quota exceeded');
+  });
+
   it('exportBundle() returns a zip blob', async () => {
     const analysis = await synthesize(['a']);
     const blob = await exportBundle({ imageIds: ['a'], analysis });
     expect(blob.type).toContain('application/zip');
+  });
+
+  it('exportBundle() surfaces the backend error message on failure', async () => {
+    const analysis = await synthesize(['a']);
+    server.use(
+      http.post('/api/export', () =>
+        HttpResponse.json(
+          { error: 'Export Failed', message: 'Board snapshot too large' },
+          { status: 413 },
+        ),
+      ),
+    );
+    await expect(exportBundle({ imageIds: ['a'], analysis })).rejects.toThrow(
+      'Board snapshot too large',
+    );
   });
 });
