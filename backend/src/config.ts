@@ -10,7 +10,7 @@ const EnvSchema = z.object({
   IMAGE_SOURCE: z.enum(['none', 'openverse', 'unsplash']).default('openverse'),
   UNSPLASH_ACCESS_KEY: z.string().min(1).optional(),
   AGENT_CLI: z.enum(['codex', 'copilot']).default('codex'),
-  VLM_PROVIDER: z.enum(['none', 'anthropic', 'openai']).default('anthropic'),
+  VLM_PROVIDER: z.enum(['none', 'anthropic', 'openai', 'copilot']).default('anthropic'),
   ANTHROPIC_API_KEY: z.string().min(1).optional(),
   OPENAI_API_KEY: z.string().min(1).optional(),
   VLM_MODEL: z.string().min(1).optional(),

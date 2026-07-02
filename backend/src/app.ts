@@ -6,10 +6,12 @@ import Fastify, {
 import type { ImageCandidate, PropositionRound } from '@muse/shared';
 import { normalizerFor } from './adapters/agent-stream.js';
 import { resolveAgentRunner } from './adapters/agent-runner.js';
+import { createClarifier } from './adapters/clarify.js';
 import { discoverImages, type DiscoverImagesInput } from './adapters/codex.js';
 import { createPropositionEngine, type ProposeStylesInput } from './adapters/proposition.js';
 import type { AppConfig } from './config.js';
 import { registerBoardRoute } from './routes/board.js';
+import { registerClarifyRoute, type ClarifyFn } from './routes/clarify.js';
 import { registerDiscoverRoute } from './routes/discover.js';
 import { registerDiscoverStreamRoute, type RunDiscoveryStream } from './routes/discover-stream.js';
 import { registerExportRoute } from './routes/export.js';
@@ -30,6 +32,7 @@ import { createVlmProvider } from './services/vlm-providers.js';
 
 export type ServerDeps = {
   discover: (input: DiscoverImagesInput) => Promise<ImageCandidate[]>;
+  clarify: ClarifyFn;
   propose: (input: ProposeStylesInput) => Promise<PropositionRound>;
   store: SessionStore;
   thumbnails: ThumbnailStore;
@@ -47,12 +50,15 @@ export type BuildServerOptions = {
 };
 
 export function buildServer({ config, deps }: BuildServerOptions): FastifyInstance {
-  const app = Fastify({ logger: resolveLogger(config) });
+  // The /export body carries the rasterized board PNG (base64), which is far larger than Fastify's
+  // 1 MB default — raise the limit so exports don't 413.
+  const app = Fastify({ logger: resolveLogger(config), bodyLimit: 50 * 1024 * 1024 });
   const store = deps?.store ?? createSessionStore();
   const runner = resolveAgentRunner(config);
   const discover =
     deps?.discover ?? ((input: DiscoverImagesInput) => discoverImages(input, { runner }));
   const propose = deps?.propose ?? createPropositionEngine({ runner }).propose;
+  const clarify = deps?.clarify ?? createClarifier({ runner }).clarify;
   const normalize = normalizerFor(config.agentCli);
   const runDiscoveryStream =
     deps?.runDiscoveryStream ??
@@ -102,6 +108,7 @@ export function buildServer({ config, deps }: BuildServerOptions): FastifyInstan
 
   registerHealthRoute(app, { detect: detectCli });
   registerDiscoverRoute(app, { discover, store });
+  registerClarifyRoute(app, { clarify });
   registerDiscoverStreamRoute(app, { runDiscovery: runDiscoveryStream, store });
   registerProposeRoute(app, { propose, store });
   registerImageRoute(app, { store, thumbnails, fetchImage: fetchImageImpl });

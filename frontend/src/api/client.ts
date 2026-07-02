@@ -1,12 +1,26 @@
 import type {
   AgentStreamEvent,
   BoardState,
+  ClarifyResult,
   ImageCandidate,
   MoodboardAnalysis,
   PropositionRound,
 } from '@muse/shared';
+import { API_BASE } from './config';
 
-const API_BASE = import.meta.env.VITE_API_BASE ?? '/api';
+// Surface the backend's error `message` (JSON body) instead of a bare status code, so the UI can
+// show *why* something failed (e.g. "Vision model unavailable: You have exceeded your monthly quota").
+async function errorFrom(response: Response, fallback: string): Promise<Error> {
+  try {
+    const body = (await response.json()) as { message?: unknown };
+    if (typeof body.message === 'string' && body.message.trim() !== '') {
+      return new Error(body.message);
+    }
+  } catch {
+    // no JSON body — fall through
+  }
+  return new Error(`${fallback} (status ${response.status})`);
+}
 
 export type DiscoverRequest = {
   brief: string;
@@ -127,8 +141,21 @@ export async function propose(
   return (await response.json()) as PropositionRound;
 }
 
-export function thumbnailUrl(id: string): string {
-  return `${API_BASE}/image/${id}/thumbnail`;
+export async function clarify(
+  brief: string,
+  count?: number,
+  signal?: AbortSignal,
+): Promise<ClarifyResult> {
+  const response = await fetch(`${API_BASE}/clarify`, {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({ brief, ...(count !== undefined ? { count } : {}) }),
+    signal,
+  });
+  if (!response.ok) {
+    throw new Error(`Clarify request failed with status ${response.status}`);
+  }
+  return (await response.json()) as ClarifyResult;
 }
 
 export async function searchImages(
@@ -182,7 +209,7 @@ export async function synthesize(
     signal,
   });
   if (!response.ok) {
-    throw new Error(`Synthesis failed with status ${response.status}`);
+    throw await errorFrom(response, 'Synthesis failed');
   }
   return (await response.json()) as MoodboardAnalysis;
 }
@@ -201,7 +228,7 @@ export async function exportBundle(body: ExportRequest, signal?: AbortSignal): P
     signal,
   });
   if (!response.ok) {
-    throw new Error(`Export failed with status ${response.status}`);
+    throw await errorFrom(response, 'Export failed');
   }
   return await response.blob();
 }

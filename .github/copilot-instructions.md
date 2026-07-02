@@ -166,6 +166,58 @@ scopes repo+workflow). Git identity: `Adam Riffi <211388619+adam-riffi@users.nor
 
 ## Decision log
 
+- **2026-07-02** — **Actionable Copilot vision errors.** Follow-up to the failure-surfacing fix: the
+  raw Copilot CLI error (e.g. "You have exceeded your monthly quota") was passed straight through, so
+  the user still had to guess the cause. Added `describeCopilotError(raw)` in `vlm-providers.ts` — a
+  pure translator (used at the `runCopilotWithAttachments` throw site) that maps **quota / rate-limit
+  / not-signed-in** to a plain-English message *with the remedy* ("wait for reset, or set
+  VLM_PROVIDER=anthropic/openai + API key in backend/.env"). Unknown errors pass through unchanged, so
+  it never hides real detail. This becomes the `VlmProviderError.message` the route wraps as 502.
+
+- **2026-07-02** — **Failure surfacing (Synthesis/Export "status N").** Synthesis 500s were the
+  Copilot **monthly quota** being exhausted: `runCopilotWithAttachments` throws `VlmProviderError`,
+  which the synthesize route did **not** catch (only `SynthesizeError`→400, `VlmAnalysisError`→502),
+  so it escaped as a raw 500. Route now catches `VlmProviderError`→**502** with a clear message
+  ("Vision model unavailable: {reason}"). Frontend `api/client` clients threw generic
+  `"... with status N"` and never read the response body, so users never saw *why*. Added an
+  `errorFrom(response, fallback)` helper that surfaces the backend JSON `message`; wired into
+  `synthesize` and `exportBundle`. NB: the quota exhaustion itself is **environmental** — even with
+  clear errors, synthesis/export stay down until the Copilot quota resets OR `VLM_PROVIDER` is set to
+  `openai`/`anthropic` (+ API key) in `backend/.env`. Discovery/propositions use Codex (separate
+  quota) and are unaffected. The 413 export case was already fixed (bodyLimit 50 MB).
+
+- **2026-06-30** — **Search coherence fix.** Discovery drifted off-brief because the prompt said
+  refinements "must strongly influence results" and quoted the brief once. Re-anchored: the brief is
+  the fixed SUBJECT ("never drift", "must unmistakably read as the subject", read as a visual
+  aesthetic), refinements only sharpen it. Proposition prompt tethered the same way + preview must
+  exemplify the descriptor (pick-by-sight matches the search). Verified live (Death-Note-terminal
+  brief → consistently on-theme). NB: picks still pass a TEXT descriptor, not the chosen image —
+  visual-anchored search (pass the picked image to discovery/VLM) is the deeper roadmap fix.
+
+- **2026-06-30** — **v2 intake (clarify-before-search).** After the brief, an intake agent
+  (`adapters/clarify.ts` `createClarifier`, same runner seam; defensive JSON parse + retry +
+  timeout-aware; no web search → fast) asks ≤N short questions via `POST /clarify`; answers seed the
+  proposition/discovery `refinements`. Frontend: `state/clarify.ts` + `ClarifyForm` between `BriefForm`
+  and propositions (skip / "search anyway" hatches). Flow is now brief → clarify → propose → discover.
+  First slice of Phase Two Epic A (full multi-agent intake with confidence/pivots comes later).
+
+- **2026-06-30** — **v2 started.** Front/back boundary formalized + ESLint-enforced for future UI
+  refactors: `frontend/src/api/` = `config` (API_BASE) + `client` (the ONLY network seam) + `urls`
+  (pure builders). Rules: frontend never imports backend; components never import `api/client` (go via
+  `state/*` stores); pure URL builders (`api/urls`) are the one UI-safe api import. A redesigned UI
+  only needs `state/*` actions/selectors + `@muse/shared`. See `docs/ARCHITECTURE.md`. (v2 roadmap in
+  session `plan.md` §9: Epic 0 speed/reliability → B prompts → A multi-agent intake.)
+
+- **2026-06-28** — Synthesis is format/link resilient: every kept image is normalized to **PNG via
+  sharp before node-vibrant** (Jimp can't decode WebP/AVIF → was a 500), undecodable images are
+  skipped, and the synthesizer **skips kept images that fail to fetch** (dead/blocked links),
+  throwing 400 only when none load. Fixed "Synthesis failed with status 500".
+
+- **2026-06-28** — Synthesis can use the **Copilot CLI for vision** (`VLM_PROVIDER=copilot`, no API
+  key): `createCopilotVlmProvider` normalizes kept images to PNGs and attaches them via `copilot -p …
+  --attachment`, parsed by the existing VLM analyzer. Keeps the "use local agent CLIs" philosophy;
+  `anthropic`/`openai` (keyed) remain options. `/synthesize` returns 501 only when no provider resolves.
+
 - **2026-06-28** — "Failed to parse … after one retry" was usually a **timeout**, not a parse error:
   Codex over-searches (20+ web searches for 12 images) and was SIGKILLed at 120s with no final message.
   Fix: default count 12 → 8, prompt asks the agent to search efficiently/stop early, runner timeout

@@ -30,6 +30,33 @@ scripts/                   — standalone validation (e.g. test-discover.ts)
 - Export bundle — `images/`, `manifest.json`, `design-tokens.json`, `design-brief.md`, `prompt.md`,
   plus the whiteboard snapshot (`board.json` + `board.png`).
 
+## Frontend ↔ backend boundary (kept clean for future UI refactors)
+
+The two sides cross only through **typed contracts** and a **single network seam**, so the UI can be
+refactored (or replaced) without touching business logic.
+
+```
+@muse/shared (zod)  ─ the only types that cross the wire
+        │
+frontend/src/
+  api/config.ts   ─ API_BASE (one place)
+  api/client.ts   ─ THE network boundary: every fetch/EventSource lives here, nowhere else
+  api/urls.ts     ─ pure URL builders (no network), safe for the UI to use
+  state/*         ─ stores (zustand): call the client, hold state, expose actions/selectors
+  components/*    ─ presentational: read state + props only; never call the API
+  board/*  lib/*  ─ pure domain/util helpers
+```
+
+Layering rules (enforced by ESLint — see `eslint.config.js`):
+
+- **Frontend never imports backend code** — only `@muse/shared` + the API client cross the boundary.
+- **Network lives only in `api/client.ts`** (no stray `fetch`/`EventSource` in stores or components).
+- **Components never import `api/client`** — they go through a store; pure URL builders (`api/urls`)
+  are the one exception they may import.
+
+A new/redesigned UI only needs the `state/*` actions+selectors and `@muse/shared` types; the
+`api/*` and backend layers are untouched.
+
 ## Key principles
 
 - **Isolate CLI fragility.** Every Codex-specific, version-sensitive detail lives in

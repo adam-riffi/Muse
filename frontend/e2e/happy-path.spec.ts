@@ -51,6 +51,8 @@ function json(route: Route, body: unknown): Promise<void> {
 test.beforeEach(async ({ page }) => {
   await page.route('**/api/**', async (route) => {
     const url = route.request().url();
+    if (url.includes('/api/clarify'))
+      return json(route, { questions: [{ id: 'q1', question: 'What overall mood?' }] });
     if (url.includes('/api/propose')) return json(route, round);
     if (url.includes('/api/discover/stream')) {
       const body =
@@ -82,9 +84,11 @@ test('propose → refine → discover → curate → export', async ({ page }) =
   await page.goto('/');
   await expect(page.getByRole('heading', { name: 'Muse' })).toBeVisible();
 
-  // Brief → proposition round
+  // Brief → clarifying questions → proposition round
   await page.getByLabel('Project brief').fill('anime aesthetic');
   await page.getByRole('button', { name: /explore styles/i }).click();
+  await expect(page.getByText('What overall mood?')).toBeVisible();
+  await page.getByRole('button', { name: /^skip$/i }).click();
   await expect(page.getByText('Ghibli')).toBeVisible();
 
   // Pick a sub-style → refinement breadcrumb

@@ -1,4 +1,5 @@
 import { Vibrant } from 'node-vibrant/node';
+import sharp from 'sharp';
 import { type PaletteRole, type PaletteSwatch, PaletteSwatchSchema } from '@muse/shared';
 
 // node-vibrant's swatch categories, in the order we surface them.
@@ -89,12 +90,19 @@ function assignRoles(reps: Map<Category, Representative>): PaletteSwatch[] {
 }
 
 // Deterministically derive a role-tagged palette from the pixels of the kept images. This is the
-// "determinism boundary": colors come from pixels only — never from the VLM.
+// "determinism boundary": colors come from pixels only — never from the VLM. Each image is first
+// normalized to PNG via sharp because node-vibrant's decoder (Jimp) can't read WebP/AVIF; a single
+// undecodable image is skipped rather than failing the whole palette.
 export async function extractPalette(images: readonly Buffer[]): Promise<PaletteSwatch[]> {
   const reps = new Map<Category, Representative>();
   for (const image of images) {
-    const palette = await Vibrant.from(image).getPalette();
-    accumulate(reps, palette as unknown as Record<string, unknown>);
+    try {
+      const png = await sharp(image).png().toBuffer();
+      const palette = await Vibrant.from(png).getPalette();
+      accumulate(reps, palette as unknown as Record<string, unknown>);
+    } catch {
+      // skip images that can't be decoded
+    }
   }
   return assignRoles(reps);
 }

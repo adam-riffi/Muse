@@ -41,6 +41,9 @@ const sampleRound: PropositionRound = {
 };
 
 export const handlers = [
+  http.post('/api/clarify', () =>
+    HttpResponse.json({ questions: [{ id: 'q1', question: 'What overall mood?', hint: 'calm…' }] }),
+  ),
   http.post('/api/discover', () => HttpResponse.json(sampleCandidates)),
   http.post('/api/propose', () => HttpResponse.json(sampleRound)),
   http.get('/api/health', () => HttpResponse.json({ status: 'ok' })),
