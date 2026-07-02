@@ -8,6 +8,7 @@ import {
   createCopilotVlmProvider,
   createOpenAiProvider,
   createVlmProvider,
+  describeCopilotError,
 } from './vlm-providers.js';
 
 function pngBase64(): Promise<string> {
@@ -109,5 +110,28 @@ describe('createCopilotVlmProvider', () => {
     expect(received?.prompt).toBe('analyze these');
     expect(received?.paths).toHaveLength(2);
     expect(received?.paths.every((p) => p.endsWith('.png'))).toBe(true);
+  });
+});
+
+describe('describeCopilotError', () => {
+  it('explains an exhausted quota and how to recover', () => {
+    const message = describeCopilotError('You have exceeded your monthly quota');
+    expect(message).toContain('quota is used up');
+    expect(message).toContain('VLM_PROVIDER=anthropic');
+    expect(message).toContain('VLM_PROVIDER=openai');
+  });
+
+  it('explains rate limiting', () => {
+    expect(describeCopilotError('Error 429: too many requests')).toContain('rate-limiting');
+  });
+
+  it('explains an unauthenticated CLI', () => {
+    expect(describeCopilotError('Error: not logged in')).toContain('signed in');
+  });
+
+  it('passes an unrecognized error through unchanged', () => {
+    expect(describeCopilotError('Copilot CLI returned no analysis')).toBe(
+      'Copilot CLI returned no analysis',
+    );
   });
 });
