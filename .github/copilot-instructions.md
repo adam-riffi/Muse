@@ -166,6 +166,18 @@ scopes repo+workflow). Git identity: `Adam Riffi <211388619+adam-riffi@users.nor
 
 ## Decision log
 
+- **2026-07-02** — **Failure surfacing (Synthesis/Export "status N").** Synthesis 500s were the
+  Copilot **monthly quota** being exhausted: `runCopilotWithAttachments` throws `VlmProviderError`,
+  which the synthesize route did **not** catch (only `SynthesizeError`→400, `VlmAnalysisError`→502),
+  so it escaped as a raw 500. Route now catches `VlmProviderError`→**502** with a clear message
+  ("Vision model unavailable: {reason}"). Frontend `api/client` clients threw generic
+  `"... with status N"` and never read the response body, so users never saw *why*. Added an
+  `errorFrom(response, fallback)` helper that surfaces the backend JSON `message`; wired into
+  `synthesize` and `exportBundle`. NB: the quota exhaustion itself is **environmental** — even with
+  clear errors, synthesis/export stay down until the Copilot quota resets OR `VLM_PROVIDER` is set to
+  `openai`/`anthropic` (+ API key) in `backend/.env`. Discovery/propositions use Codex (separate
+  quota) and are unaffected. The 413 export case was already fixed (bodyLimit 50 MB).
+
 - **2026-06-30** — **Search coherence fix.** Discovery drifted off-brief because the prompt said
   refinements "must strongly influence results" and quoted the brief once. Re-anchored: the brief is
   the fixed SUBJECT ("never drift", "must unmistakably read as the subject", read as a visual

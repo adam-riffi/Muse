@@ -8,6 +8,20 @@ import type {
 } from '@muse/shared';
 import { API_BASE } from './config';
 
+// Surface the backend's error `message` (JSON body) instead of a bare status code, so the UI can
+// show *why* something failed (e.g. "Vision model unavailable: You have exceeded your monthly quota").
+async function errorFrom(response: Response, fallback: string): Promise<Error> {
+  try {
+    const body = (await response.json()) as { message?: unknown };
+    if (typeof body.message === 'string' && body.message.trim() !== '') {
+      return new Error(body.message);
+    }
+  } catch {
+    // no JSON body — fall through
+  }
+  return new Error(`${fallback} (status ${response.status})`);
+}
+
 export type DiscoverRequest = {
   brief: string;
   count?: number;
@@ -195,7 +209,7 @@ export async function synthesize(
     signal,
   });
   if (!response.ok) {
-    throw new Error(`Synthesis failed with status ${response.status}`);
+    throw await errorFrom(response, 'Synthesis failed');
   }
   return (await response.json()) as MoodboardAnalysis;
 }
@@ -214,7 +228,7 @@ export async function exportBundle(body: ExportRequest, signal?: AbortSignal): P
     signal,
   });
   if (!response.ok) {
-    throw new Error(`Export failed with status ${response.status}`);
+    throw await errorFrom(response, 'Export failed');
   }
   return await response.blob();
 }
