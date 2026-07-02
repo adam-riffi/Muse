@@ -128,6 +128,36 @@ function copilotErrorFrom(stdout: string): string | null {
   return null;
 }
 
+// Translate a raw GitHub Copilot CLI error into a clear, actionable message so the user learns the
+// *actual* problem (and how to recover) instead of a cryptic CLI string. Unrecognized errors are
+// returned unchanged.
+export function describeCopilotError(raw: string): string {
+  const text = raw.toLowerCase();
+  const switchHint =
+    'set VLM_PROVIDER=anthropic or VLM_PROVIDER=openai (with the matching API key) in backend/.env';
+  if (text.includes('quota')) {
+    return `Your GitHub Copilot monthly request quota is used up, so the vision model can't run. Wait for it to reset, or ${switchHint}.`;
+  }
+  if (
+    text.includes('rate limit') ||
+    text.includes('rate-limit') ||
+    text.includes('too many requests') ||
+    text.includes('429')
+  ) {
+    return `GitHub Copilot is rate-limiting requests right now. Wait a moment and try again, or ${switchHint}.`;
+  }
+  if (
+    text.includes('unauthorized') ||
+    text.includes('401') ||
+    text.includes('not logged in') ||
+    text.includes('sign in') ||
+    text.includes('authenticat')
+  ) {
+    return `The GitHub Copilot CLI isn't signed in. Run \`copilot\` to authenticate, or ${switchHint}.`;
+  }
+  return raw;
+}
+
 const runCopilotWithAttachments: CopilotVlmExec = async (prompt, attachmentPaths, model) => {
   const bin = process.env.COPILOT_BIN ?? 'copilot';
   const args = [
@@ -167,7 +197,9 @@ const runCopilotWithAttachments: CopilotVlmExec = async (prompt, attachmentPaths
 
     const message = extractLastCopilotMessage(stdout);
     if (message === null) {
-      throw new VlmProviderError(copilotErrorFrom(stdout) ?? 'Copilot CLI returned no analysis');
+      throw new VlmProviderError(
+        describeCopilotError(copilotErrorFrom(stdout) ?? 'Copilot CLI returned no analysis'),
+      );
     }
     return message;
   } finally {

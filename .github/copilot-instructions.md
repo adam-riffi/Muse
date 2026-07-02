@@ -166,6 +166,14 @@ scopes repo+workflow). Git identity: `Adam Riffi <211388619+adam-riffi@users.nor
 
 ## Decision log
 
+- **2026-07-02** — **Actionable Copilot vision errors.** Follow-up to the failure-surfacing fix: the
+  raw Copilot CLI error (e.g. "You have exceeded your monthly quota") was passed straight through, so
+  the user still had to guess the cause. Added `describeCopilotError(raw)` in `vlm-providers.ts` — a
+  pure translator (used at the `runCopilotWithAttachments` throw site) that maps **quota / rate-limit
+  / not-signed-in** to a plain-English message *with the remedy* ("wait for reset, or set
+  VLM_PROVIDER=anthropic/openai + API key in backend/.env"). Unknown errors pass through unchanged, so
+  it never hides real detail. This becomes the `VlmProviderError.message` the route wraps as 502.
+
 - **2026-07-02** — **Failure surfacing (Synthesis/Export "status N").** Synthesis 500s were the
   Copilot **monthly quota** being exhausted: `runCopilotWithAttachments` throws `VlmProviderError`,
   which the synthesize route did **not** catch (only `SynthesizeError`→400, `VlmAnalysisError`→502),
